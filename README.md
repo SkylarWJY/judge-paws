@@ -38,20 +38,29 @@ judge-paws/
 - **`POST /api/trials`** — Claude Opus 4.8 renders a full verdict (structured output:
   parties, scores, drama, blame %, red/green flags, ruling, judge's note, caption) with
   a safety gate for unsafe input
-- **`POST /api/waitlist`** — saves early-access emails to `data/waitlist.json`
+- **`POST /api/waitlist`** — pushes early-access emails into **beehiiv** (or a local
+  `data/waitlist.json` fallback)
 
 ## How the AI plugs in
 
+**Real evidence in.** On the evidence screen you upload actual chat screenshots. They're
+compressed client-side and sent to `POST /api/trials` as image blocks; **Claude Opus 4.8
+reads them with vision** and grounds the entire verdict in the real conversation — it
+quotes real lines in the ruling and red flags. With no upload, it invents a plausible case.
+
 The court app renders entirely from one `caseData` object. `BuildScreen` in
-[`app/jp-screens-2.jsx`](app/jp-screens-2.jsx) calls `POST /api/trials`; the server asks
-Claude to hold court and return a verdict in the exact `caseData` shape. If the backend
-is unreachable, the app falls back to a bundled sample case — so it never breaks.
+[`app/jp-screens-2.jsx`](app/jp-screens-2.jsx) calls `POST /api/trials`; the server returns
+a verdict in the exact `caseData` shape. If the backend is unreachable, the app falls back
+to a bundled sample case — so it never breaks.
 
 ```
-relationship type + evidence  ─►  /api/trials  ─►  Claude Opus 4.8 (structured)
-                                                        │
-                                          full verdict → caseData → Courtroom + Verdict
+screenshots + relationship  ─►  /api/trials  ─►  Claude Opus 4.8 (vision + structured)
+                                                      │
+                                        verdict → caseData → Courtroom + Verdict
 ```
+
+**Shareable verdict.** The verdict screen's *Share* button renders a downloadable card
+(canvas) and uses the Web Share API where available — the viral loop is built in.
 
 ## Run it
 
@@ -63,6 +72,22 @@ npm start                 # → http://localhost:4319
 
 Open the landing page, join the waitlist, or jump to `/app/Judge Paws.html` to hold a
 real, AI-rendered trial. The API key stays server-side and never ships to the browser.
+
+### Waitlist → beehiiv
+
+Set `BEEHIIV_API_KEY` and `BEEHIIV_PUBLICATION_ID` in `.env` and waitlist signups land
+directly in your beehiiv publication (with a welcome email). Leave them blank for local
+dev and emails append to `data/waitlist.json`.
+
+## Deploy
+
+Any Node host works (the app is a single `node server.mjs` process). A `Procfile` is
+included for **Render** / **Railway** — point it at the repo, set the env vars, done.
+
+## Privacy
+
+Uploaded screenshots are sent to the verdict API for a single request and are **not
+persisted** server-side. Don't upload anything you wouldn't want read by the model.
 
 ## Origin
 

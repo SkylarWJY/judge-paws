@@ -23,8 +23,11 @@ first AI Relationship Court. It is a playful, viral, entertainment product: peop
 relationship dispute and you deliver a verdict that is funny, shareable, and secretly fair.
 Think internet-meme courtroom, not real legal advice.
 
-Given a relationship type and any submitted "evidence", invent a vivid, specific case and
-return a complete verdict. Rules:
+Given a relationship type and any submitted evidence, return a complete verdict. When real
+screenshots or text are provided, READ them carefully and base the ENTIRE verdict on the
+ACTUAL conversation — quote real lines in the judgeNote and redFlags, use the real names or
+handles if visible, and make the party quotes real messages from the chat. When NO real
+evidence is provided, invent a vivid, relatable case. Rules:
 - Be witty and warm. Puns encouraged. Never mean-spirited or cruel.
 - The judgeNote must land a fair point on BOTH parties, even when one is "found guilty".
 - Two parties with fun first names, a fitting emoji, a role label, a 0–100 "relationship
@@ -61,15 +64,32 @@ const CASE_SCHEMA = {
 };
 
 async function renderTrial({ relationshipType, evidence }) {
-  const ev = Array.isArray(evidence) && evidence.length
-    ? evidence.map((e) => `- ${e.label || "evidence"}${e.text ? `: ${e.text}` : ""}`).join("\n")
-    : "(no specific evidence submitted — invent a juicy, relatable case)";
-  const userPrompt = `New case filed.\n\nRelationship type: ${relationshipType || "couple"}\n\nEvidence on file:\n${ev}\n\nHold court and return the full verdict.`;
+  const items = Array.isArray(evidence) ? evidence : [];
+  const content = [{
+    type: "text",
+    text: `New case filed.\n\nRelationship type: ${relationshipType || "couple"}\n\nEvidence on file:`,
+  }];
+  if (!items.length) {
+    content.push({ type: "text", text: "(no evidence submitted — invent a juicy, relatable case)" });
+  } else {
+    for (const e of items) {
+      if (e && e.kind === "image" && e.data) {
+        content.push({ type: "text", text: `— ${e.label || "Screenshot"} (read this screenshot):` });
+        content.push({ type: "image", source: { type: "base64", media_type: e.mediaType || "image/jpeg", data: e.data } });
+      } else if (e && e.text) {
+        content.push({ type: "text", text: `— ${e.label || "Note"}: ${e.text}` });
+      } else if (e) {
+        content.push({ type: "text", text: `— ${e.label || "Evidence"} submitted` });
+      }
+    }
+  }
+  content.push({ type: "text", text: "Hold court and return the full verdict, grounded in the evidence above." });
+
   const response = await client.messages.create({
     model: "claude-opus-4-8",
     max_tokens: 1500,
     system: SYSTEM,
-    messages: [{ role: "user", content: userPrompt }],
+    messages: [{ role: "user", content }],
     output_config: { format: { type: "json_schema", schema: CASE_SCHEMA } },
   });
   const textBlock = response.content.find((b) => b.type === "text");
@@ -80,6 +100,25 @@ async function renderTrial({ relationshipType, evidence }) {
 // ---- Waitlist --------------------------------------------------------------
 
 async function addToWaitlist(email) {
+  const apiKey = process.env.BEEHIIV_API_KEY;
+  const pubId = process.env.BEEHIIV_PUBLICATION_ID;
+  // Preferred: push straight into beehiiv so emails land in the real newsletter.
+  if (apiKey && pubId) {
+    const r = await fetch(`https://api.beehiiv.com/v2/publications/${pubId}/subscriptions`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        email,
+        reactivate_existing: true,
+        send_welcome_email: true,
+        utm_source: "judge-paws",
+        utm_medium: "waitlist",
+      }),
+    });
+    if (!r.ok) throw new Error(`beehiiv ${r.status}`);
+    return { store: "beehiiv" };
+  }
+  // Fallback (local dev): append to data/waitlist.json.
   await mkdir(dirname(WAITLIST), { recursive: true });
   let list = [];
   if (existsSync(WAITLIST)) {
@@ -89,7 +128,7 @@ async function addToWaitlist(email) {
     list.push({ email, at: new Date().toISOString() });
     await writeFile(WAITLIST, JSON.stringify(list, null, 2));
   }
-  return list.length;
+  return { store: "local", count: list.length };
 }
 
 // ---- HTTP plumbing ---------------------------------------------------------
@@ -105,7 +144,7 @@ const MIME = {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
-    req.on("data", (c) => { data += c; if (data.length > 1e6) reject(new Error("Body too large")); });
+    req.on("data", (c) => { data += c; if (data.length > 2e7) reject(new Error("Body too large")); });
     req.on("end", () => resolve(data));
     req.on("error", reject);
   });
@@ -130,8 +169,8 @@ const server = createServer(async (req, res) => {
     try {
       const { email } = JSON.parse((await readBody(req)) || "{}");
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return sendJSON(res, 400, { error: "Please enter a valid email." });
-      const count = await addToWaitlist(email.toLowerCase());
-      return sendJSON(res, 200, { ok: true, count });
+      await addToWaitlist(email.toLowerCase());
+      return sendJSON(res, 200, { ok: true });
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Could not save your email. Try again." }); }
   }
 

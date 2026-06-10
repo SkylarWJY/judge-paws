@@ -37,7 +37,9 @@ async function fetchTrial(relType, evidence) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       relationshipType: relType || 'couple',
-      evidence: (evidence || []).map(e => ({ label: e?.src?.label, text: e?.text })),
+      evidence: (evidence || []).map(e => e.dataUrl
+        ? { label: e?.src?.label, kind: 'image', mediaType: e.mediaType || 'image/jpeg', data: e.dataUrl.split(',')[1] }
+        : { label: e?.src?.label, text: e?.text }),
     }),
   });
   if (!res.ok) throw new Error('trial failed');
@@ -50,6 +52,59 @@ function withTheme(api) {
     plaintiff: { ...api.plaintiff, color: JP.lavender },
     defendant: { ...api.defendant, color: JP.bubblegum },
   };
+}
+
+// ─────────── shareable verdict card (canvas, no deps) ───────────
+function _roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function _wrap(ctx, text, x, y, maxW, lh) {
+  const words = String(text || '').split(/\s+/);
+  let line = '', yy = y;
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, x, yy); line = w; yy += lh; }
+    else line = test;
+  }
+  if (line) ctx.fillText(line, x, yy);
+  return yy;
+}
+async function shareVerdictCard(c) {
+  const W = 1080, H = 1350, cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#fff5fa'); g.addColorStop(1, '#ffd0e8');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#3a1f33'; ctx.font = 'bold 40px -apple-system, Arial';
+  ctx.fillText('⚖️ 🐾  JUDGE PAWS', W / 2, 110);
+  ctx.fillStyle = '#9a7088'; ctx.font = 'bold 30px -apple-system, Arial';
+  ctx.fillText(`${String(c.rulingOf || '').toUpperCase()} IS FOUND`, W / 2, 300);
+  ctx.fillStyle = '#ff4d9d'; _roundRect(ctx, W / 2 - 400, 340, 800, 160, 30); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 76px -apple-system, Arial';
+  _wrap(ctx, (c.ruling || '') + ' 🔨', W / 2, 440, 720, 80);
+  ctx.fillStyle = '#3a1f33'; ctx.font = '400 38px -apple-system, Arial';
+  const noteEnd = _wrap(ctx, c.judgeNote || '', W / 2, 640, 880, 52);
+  ctx.fillStyle = '#b32a73'; ctx.font = 'bold 44px -apple-system, Arial';
+  _wrap(ctx, c.caption || '', W / 2, Math.max(noteEnd + 120, 1000), 900, 58);
+  ctx.fillStyle = '#9a7088'; ctx.font = 'bold 32px -apple-system, Arial';
+  ctx.fillText('🐾 judgepaws.app', W / 2, H - 70);
+
+  const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+  const file = new File([blob], 'judge-paws-verdict.png', { type: 'image/png' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], text: c.caption || 'My Judge Paws verdict 🐾⚖️' }); return; } catch (_) {}
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'judge-paws-verdict.png'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 const JURORS = [
@@ -400,7 +455,7 @@ function VerdictScreen({ go, state, chaos, off, mascot, drama }) {
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 5, padding: '14px 18px 30px',
         background: 'linear-gradient(180deg, rgba(255,241,248,0), rgba(255,241,248,0.95) 40%)' }}>
         <div style={{ display: 'flex', gap: 10 }}>
-          <PawButton full onClick={() => state.onShare && state.onShare()}>Share Verdict 🚀</PawButton>
+          <PawButton full onClick={() => { shareVerdictCard(c); state.onShare && state.onShare(); }}>Share Verdict 🚀</PawButton>
           <PawButton secondary small onClick={() => go('home')} style={{ flexShrink: 0, paddingLeft: 18, paddingRight: 18 }}>New Trial</PawButton>
         </div>
       </div>

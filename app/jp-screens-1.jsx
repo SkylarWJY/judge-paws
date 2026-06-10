@@ -140,27 +140,65 @@ const SOURCES = [
   { id: 'photo', label: 'Photo', emoji: '📸' },
 ];
 
+// downscale a chosen image to a compressed JPEG data URL (keeps upload payloads small)
+function fileToCompressedDataUrl(file, maxW = 1200, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function UploadScreen({ go, state, setState, chaos, off }) {
   const ev = state.evidence;
-  const add = (src) => setState(s => ({
-    ...s, evidence: [...s.evidence, { id: Date.now() + Math.random(), src }],
-  }));
+  const fileRef = React.useRef(null);
+  const pendingSrc = React.useRef(null);
+  const [busy, setBusy] = React.useState(false);
+
+  // tapping a source opens the file picker to attach a real screenshot
+  const pick = (src) => { pendingSrc.current = src; if (fileRef.current) { fileRef.current.value = ''; fileRef.current.click(); } };
+  const onFile = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    const src = pendingSrc.current;
+    if (!file || !src) return;
+    setBusy(true);
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      setState(s => ({ ...s, evidence: [...s.evidence, { id: Date.now() + Math.random(), src, dataUrl, mediaType: 'image/jpeg' }] }));
+    } catch (_) {} finally { setBusy(false); }
+  };
   const remove = (id) => setState(s => ({ ...s, evidence: s.evidence.filter(e => e.id !== id) }));
+
   return (
     <Backdrop tint="peach">
       <Particles kind="paws" count={chaos ? 8 : 4} run={!off} />
-      <FlowHeader title="Submit the evidence" sub="Drop the receipts. Judge Paws sniffs everything." step={1} onBack={() => go('type')} />
+      <FlowHeader title="Submit the evidence" sub="Upload a screenshot of the chat. Judge Paws reads everything." step={1} onBack={() => go('type')} />
 
-      {/* source chips */}
+      <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
+
+      {/* source chips — tap to attach a screenshot from that app */}
       <div style={{ position: 'relative', zIndex: 3, padding: '4px 18px 0', flexShrink: 0,
         display: 'flex', gap: 9, flexWrap: 'wrap' }}>
         {SOURCES.map(s => (
-          <button key={s.id} onClick={() => add(s)} className="jp-tap" style={{
+          <button key={s.id} onClick={() => pick(s)} disabled={busy} className="jp-tap" style={{
             display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', whiteSpace: 'nowrap',
             padding: '9px 14px', borderRadius: 999, border: '1.5px solid rgba(255,255,255,0.9)',
             background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(14px)',
             fontFamily: 'Fredoka', fontWeight: 500, fontSize: 14, color: JP.ink,
-            boxShadow: '0 5px 14px rgba(214,98,168,0.10)',
+            boxShadow: '0 5px 14px rgba(214,98,168,0.10)', opacity: busy ? 0.6 : 1,
           }}>
             <span style={{ fontSize: 16 }}>{s.emoji}</span>{s.label} <span style={{ color: JP.bubblegum, fontWeight: 600 }}>+</span>
           </button>
@@ -173,16 +211,20 @@ function UploadScreen({ go, state, setState, chaos, off }) {
           {ev.length === 0 ? (
             <div style={{ height: 200, display: 'flex', flexDirection: 'column', alignItems: 'center',
               justifyContent: 'center', gap: 10, textAlign: 'center' }}>
-              <div style={{ fontSize: 40 }} className="jp-bob">🐾</div>
-              <div style={{ fontFamily: 'Fredoka', fontWeight: 500, fontSize: 15, color: JP.inkSoft, maxWidth: 200 }}>
-                Tap a source above to float evidence into the courtroom.
+              <div style={{ fontSize: 40 }} className="jp-bob">{busy ? '🔍' : '🐾'}</div>
+              <div style={{ fontFamily: 'Fredoka', fontWeight: 500, fontSize: 15, color: JP.inkSoft, maxWidth: 220 }}>
+                {busy ? 'Reading the receipts…' : 'Tap a source above and upload a screenshot of the conversation.'}
               </div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'flex-start' }}>
               {ev.map((e, i) => (
                 <div key={e.id} className="jp-floatin" style={{ position: 'relative', animationDelay: (i * 0.04) + 's' }}>
-                  <EvidenceThumb label={e.src.label} hue={[JP.pink, JP.lavender, JP.peach][i % 3]} />
+                  {e.dataUrl
+                    ? <img src={e.dataUrl} alt={e.src.label} style={{ width: 88, height: 110, objectFit: 'cover',
+                        borderRadius: 14, border: '2px solid rgba(255,255,255,0.9)', display: 'block',
+                        boxShadow: '0 6px 16px rgba(214,98,168,0.18)' }} />
+                    : <EvidenceThumb label={e.src.label} hue={[JP.pink, JP.lavender, JP.peach][i % 3]} />}
                   <div style={{ position: 'absolute', top: -6, left: -6, fontSize: 16,
                     background: '#fff', borderRadius: 999, width: 24, height: 24,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -199,12 +241,12 @@ function UploadScreen({ go, state, setState, chaos, off }) {
         {ev.length > 0 && (
           <div style={{ textAlign: 'center', marginTop: 12, fontFamily: 'Fredoka', fontWeight: 500,
             fontSize: 14, color: JP.bubblegum }}>
-            {ev.length} piece{ev.length > 1 ? 's' : ''} of evidence submitted 🐾
+            {ev.length} screenshot{ev.length > 1 ? 's' : ''} submitted 🐾
           </div>
         )}
       </div>
 
-      <FlowFooter disabled={ev.length === 0} onNext={() => go('build')} label="Build the Case" />
+      <FlowFooter disabled={ev.length === 0 || busy} onNext={() => go('build')} label="Build the Case" />
     </Backdrop>
   );
 }
