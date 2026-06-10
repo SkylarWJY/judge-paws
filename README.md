@@ -10,6 +10,18 @@ waitlist capture, an interactive courtroom app, and an AI verdict engine powered
   <img src="docs/landing.png" width="420" alt="Judge Paws landing page">
 </p>
 
+### The court app
+
+<p align="center">
+  <img src="docs/screens/1-home.png" width="150" alt="Home">
+  <img src="docs/screens/2-type.png" width="150" alt="Pick the relationship">
+  <img src="docs/screens/3-evidence.png" width="150" alt="Submit evidence">
+  <img src="docs/screens/4-build.png" width="150" alt="Building the case">
+  <img src="docs/screens/5-court.png" width="150" alt="The courtroom + dog jury">
+  <img src="docs/screens/6-verdict.png" width="150" alt="The verdict">
+</p>
+<p align="center"><sub>Home · Pick the relationship · Submit evidence · Build the case · Courtroom & dog jury · Verdict</sub></p>
+
 ## What's inside
 
 ```
