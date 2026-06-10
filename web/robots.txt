@@ -20,4 +20,4 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
-Sitemap: https://judge-paws.onrender.com/sitemap.xml
+Sitemap: https://judgepaws.skylarnyc.com/sitemap.xml

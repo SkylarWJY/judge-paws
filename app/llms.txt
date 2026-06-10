@@ -23,6 +23,6 @@
 - Not legal advice — entertainment only.
 
 ## Links
-- App: https://judge-paws.onrender.com/
+- App: https://judgepaws.skylarnyc.com/
 - Demo mirror: https://skylarwjy.github.io/judge-paws/
 - Source: https://github.com/SkylarWJY/judge-paws
