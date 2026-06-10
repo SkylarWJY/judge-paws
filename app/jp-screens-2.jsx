@@ -352,11 +352,12 @@ async function renderVerdictLongImage(c, lang, drama, guilty, mascot) {
   // measure pass for judge note + flags to compute height
   const m = document.createElement('canvas').getContext('2d');
   m.font = F(600, 34);
-  const noteH = _wrapText(m, c.judgeNote, 0, 0, CW - 80, 48, false) + 60;
+  // card = title block (116) + wrapped body + bottom padding
+  const noteH = 116 + _wrapText(m, c.judgeNote, 0, 0, CW - 80, 48, false) + 28;
   const flagsH = (c.redFlags.length + c.greenFlags.length) * 64 + 150;
   m.font = F(700, 40);
   const capH = _wrapText(m, c.caption, 0, 0, CW - 80, 54, false) + 110;
-  const H = 460 + 210 + noteH + 240 + 260 + 230 + flagsH + capH + 170;
+  const H = 460 + 210 + noteH + 240 + 285 + 230 + flagsH + capH + 170;
 
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -433,7 +434,7 @@ async function renderVerdictLongImage(c, lang, drama, guilty, mascot) {
   y += 230;
 
   // credit scores
-  ctx.fillStyle = 'rgba(255,255,255,0.88)'; _rr(ctx, PAD, y, CW, 210, 30); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.88)'; _rr(ctx, PAD, y, CW, 235, 30); ctx.fill();
   ctx.fillStyle = INK; ctx.font = F(800, 30);
   ctx.fillText('💳 ' + tr.verdict.creditScore, PAD + 40, y + 58);
   const drawScore = (px, who, score, col) => {
@@ -447,7 +448,7 @@ async function renderVerdictLongImage(c, lang, drama, guilty, mascot) {
   };
   drawScore(W / 2 - 200, c.plaintiff.name, c.plaintiff.score, LAV);
   drawScore(W / 2 + 200, c.defendant.name, c.defendant.score, PINK);
-  y += 260;
+  y += 285;
 
   // blame split bar
   ctx.fillStyle = 'rgba(255,255,255,0.88)'; _rr(ctx, PAD, y, CW, 180, 30); ctx.fill();
