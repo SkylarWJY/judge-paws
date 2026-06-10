@@ -278,7 +278,7 @@ const server = createServer(async (req, res) => {
 
   // --- Home → the designed marketing landing ---
   if (req.url === "/" || req.url === "") {
-    res.writeHead(302, { location: "/app/Judge%20Paws%20Landing.html" });
+    res.writeHead(302, { location: "/app/landing.html" });
     return res.end();
   }
 

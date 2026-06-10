@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Judge Paws — The First AI Relationship Court</title>
+  <!-- ───────── SEO ───────── -->
+  <meta name="description" content="Judge Paws is the first AI relationship court. Tell your side by voice or text, drop in chat screenshots, and a fluffy AI judge plus a jury of five opinionated dogs deliver a hilarious, shareable verdict — drama meter, blame split, red flags and all. Bilingual EN/中文. First verdict free." />
+  <meta name="keywords" content="AI relationship court, couples argument settler, AI judge, relationship verdict, who is right quiz, Judge Paws, AI 恋爱法庭, 情侣吵架判决" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://judge-paws.onrender.com/" />
+  <meta name="theme-color" content="#FF4D97" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Judge Paws" />
+  <meta property="og:title" content="Judge Paws — The First AI Relationship Court ⚖️🐾" />
+  <meta property="og:description" content="Tell your side. Upload the receipts. Let the dog decide. A jury of five very good dogs delivers a hilarious, screenshot-ready verdict. Bilingual EN/中文." />
+  <meta property="og:url" content="https://judge-paws.onrender.com/" />
+  <meta property="og:image" content="https://judge-paws.onrender.com/app/assets/judge-paws-full.jpg" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="zh_CN" />
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Judge Paws — The First AI Relationship Court ⚖️🐾" />
+  <meta name="twitter:description" content="My boyfriend got convicted by 4 AI dogs for sending 'k'. Get your verdict — first one free." />
+  <meta name="twitter:image" content="https://judge-paws.onrender.com/app/assets/judge-paws-full.jpg" />
+  <!-- Structured data (SEO + GEO: readable by Google AND AI engines) -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "Judge Paws",
+        "alternateName": "汪汪法官",
+        "url": "https://judge-paws.onrender.com/",
+        "applicationCategory": "EntertainmentApplication",
+        "operatingSystem": "Web",
+        "description": "The first AI relationship court. Tell your side by voice or text, upload chat screenshots, and an AI judge with a jury of five dogs delivers a funny, fair, shareable verdict.",
+        "inLanguage": ["en", "zh"],
+        "offers": [
+          {"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Free — 1 verdict per day"},
+          {"@type": "Offer", "price": "2.99", "priceCurrency": "USD", "name": "Judge Paws+ monthly — unlimited verdicts, Savage mode, appeals"}
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {"@type": "Question", "name": "What is Judge Paws?", "acceptedAnswer": {"@type": "Answer", "text": "Judge Paws is the first AI relationship court — an entertainment app where you bring a relationship dispute (couple, situationship, ex, roommate, bestie or family group chat), tell your side, and an AI judge plus a jury of five opinionated dogs deliver a funny but secretly fair verdict."}},
+          {"@type": "Question", "name": "How does Judge Paws work?", "acceptedAnswer": {"@type": "Answer", "text": "Pick the relationship type, tell what happened by voice or text, optionally upload chat screenshots as evidence, and Judge Paws builds the case: a verdict with a ruling, judge's note, drama meter, relationship credit scores, blame split, red flags and a ready-to-post caption — exportable as one tall shareable image."}},
+          {"@type": "Question", "name": "Is Judge Paws free?", "acceptedAnswer": {"@type": "Answer", "text": "Your first verdict every day is free, and sharing earns bonus verdicts. Judge Paws+ is $2.99/month for unlimited verdicts, Savage mode and appeals."}},
+          {"@type": "Question", "name": "Does Judge Paws support Chinese?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — Judge Paws is fully bilingual. Switch between English and 中文 anytime; verdicts are written natively in the language you choose."}},
+          {"@type": "Question", "name": "Is this real legal advice?", "acceptedAnswer": {"@type": "Answer", "text": "No. Judge Paws is entertainment — a playful way to settle who left who on read. It is not legal, medical or therapeutic advice."}}
+        ]
+      }
+    ]
+  }</script>
+
+<script>document.documentElement.className = 'js';</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bubblegum:#FF4D97; --pink:#FF87BE; --pink-soft:#FFD3E6;
+    --lavender:#B49BFF; --lavender-soft:#E6DCFF; --peach:#FFB088; --peach-soft:#FFE0CC;
+    --mint:#34D3A6; --red:#FF5470; --gold:#FFC24B;
+    --ink:#5A2D49; --ink-soft:#9A7690; --ink-faint:#C4A8BC;
+    --cream:#FFF6FB; --white:#fff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Nunito', sans-serif; color: var(--ink);
+    background: var(--cream); overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3,h4 { font-family: 'Fredoka', sans-serif; font-weight: 600; line-height: 1.04; letter-spacing: -0.5px; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+  .center { text-align: center; }
+
+  /* ── buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px;
+    padding: 15px 28px; border-radius: 999px; border: none;
+    transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    color: #fff; background: linear-gradient(180deg, var(--pink), var(--bubblegum));
+    box-shadow: 0 12px 26px rgba(255,77,151,.4), inset 0 1px 1px rgba(255,255,255,.6);
+  }
+  .btn-primary:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 18px 34px rgba(255,77,151,.5); }
+  .btn-ghost {
+    color: var(--bubblegum); background: rgba(255,255,255,.75);
+    border: 1.5px solid var(--pink-soft); box-shadow: 0 6px 16px rgba(214,98,168,.1);
+  }
+  .btn-ghost:hover { transform: translateY(-2px); background: #fff; }
+
+  /* ── glass ── */
+  .glass {
+    background: rgba(255,255,255,.62);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid rgba(255,255,255,.85);
+    box-shadow: 0 14px 40px rgba(214,98,168,.14), inset 0 1px 1px rgba(255,255,255,.9);
+    border-radius: 28px;
+  }
+
+  /* ── blobs ── */
+  .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; z-index: 0; pointer-events: none; }
+  @keyframes bobfloat { 0%,100%{transform:translateY(0) rotate(-1.5deg);} 50%{transform:translateY(-14px) rotate(1.5deg);} }
+  @keyframes drift { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(30px,-26px) scale(1.08);} 66%{transform:translate(-20px,18px) scale(.94);} }
+  .blob.anim { animation: drift 20s ease-in-out infinite; }
+
+  /* ── nav ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    padding: 14px 0;
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px 11px 22px; border-radius: 999px;
+    background: rgba(255,255,255,.6); backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255,255,255,.8); box-shadow: 0 8px 26px rgba(214,98,168,.12);
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-family: 'Fredoka'; font-weight: 600; font-size: 21px; white-space: nowrap; }
+  .brand .paw { font-size: 22px; }
+  .nav-links { display: flex; gap: 26px; align-items: center; font-weight: 700; font-size: 15px; color: var(--ink-soft); }
+  .nav-links a { white-space: nowrap; }
+  .nav-links a:hover { color: var(--bubblegum); }
+  .nav .btn { padding: 11px 22px; font-size: 15px; }
+  .lang-switch { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.7);
+    border: 1px solid rgba(255,255,255,.85); box-shadow: 0 4px 12px rgba(214,98,168,.12); }
+  .lang-switch button { border: none; cursor: pointer; padding: 6px 12px; border-radius: 999px;
+    font-family: 'Fredoka'; font-weight: 600; font-size: 13px; color: var(--ink-soft); background: transparent; }
+  .lang-switch button.on { background: linear-gradient(180deg, var(--pink), var(--bubblegum)); color: #fff;
+    box-shadow: 0 4px 10px rgba(255,77,151,.4); }
+
+  /* ── hero ── */
+  .hero { position: relative; padding: 40px 0 70px; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(120% 90% at 75% 8%, #FFE8F4 0%, #F6ECFF 48%, #FFEADF 100%); }
+  .hero-grid { position: relative; z-index: 2; display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px; font-family: 'Fredoka'; font-weight: 600; white-space: nowrap;
+    font-size: 13.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--bubblegum);
+    background: rgba(255,77,151,.1); border: 1.5px solid rgba(255,77,151,.22);
+    padding: 8px 16px; border-radius: 999px; margin-bottom: 22px;
+  }
+  .hero h1 { font-size: clamp(38px, 4.8vw, 60px); color: var(--ink); }
+  .hero .lede { font-size: 20px; font-weight: 700; color: var(--ink-soft); margin: 22px 0 30px; max-width: 460px; line-height: 1.5; }
+  .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+  .proof { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-weight: 700; font-size: 14.5px; color: var(--ink-soft); }
+  .avatars { display: flex; }
+  .avatars span { width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #fff; margin-left: -10px;
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+    background: linear-gradient(160deg,#fff,var(--pink-soft)); box-shadow: 0 3px 8px rgba(214,98,168,.2); }
+  .avatars span:first-child { margin-left: 0; }
+
+  /* hero visual */
+  .hero-visual { position: relative; display: flex; align-items: center; justify-content: center; min-height: 520px; padding-bottom: 58px; }
+  .medallion-wrap { position: relative; }
+  .medallion {
+    position: relative; width: 366px; height: 472px; border-radius: 34px;
+    border: 6px solid rgba(255,255,255,.95); overflow: hidden;
+    box-shadow: 0 34px 74px rgba(214,98,168,.42), inset 0 2px 8px rgba(255,255,255,.9);
+    background: #fff5fb;
+  }
+  .medallion img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 32%; }
+  .halo { position: absolute; width: 460px; height: 500px; border-radius: 44px;
+    background: radial-gradient(ellipse at center, rgba(255,135,190,.5), rgba(255,135,190,0) 68%); filter: blur(12px); z-index: 0; }
+  .gavel-badge {
+    position: absolute; right: -24px; top: 16px; width: 78px; height: 78px; border-radius: 50%;
+    background: linear-gradient(160deg, var(--gold), #FF9E3D); border: 4px solid #fff;
+    box-shadow: 0 10px 24px rgba(255,158,61,.5); display: flex; align-items: center; justify-content: center;
+    font-size: 36px; z-index: 5;
+  }
+  .float-chip {
+    position: absolute; z-index: 6; padding: 12px 16px; border-radius: 18px; background: #fff;
+    box-shadow: 0 14px 30px rgba(214,98,168,.22); border: 1.5px solid rgba(255,255,255,.9);
+    font-family: 'Fredoka'; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  }
+  .chip-obj { top: -4px; left: -66px; color: var(--bubblegum); }
+  .chip-guilty { bottom: 124px; left: -72px; color: var(--red); }
+  .chip-drama { bottom: 44px; right: -62px; }
+  .chip-drama b { font-family:'Fredoka'; font-size: 22px; color: var(--bubblegum); }
+  .f1 { animation: bobfloat 4.5s ease-in-out infinite; }
+  .pet-swap { position: absolute; bottom: -58px; left: 50%; transform: translateX(-50%); z-index: 7; display: flex; gap: 8px; }
+  .pet-swap-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    background: rgba(255,255,255,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255,255,255,.95); font-family: 'Fredoka'; font-weight: 500; font-size: 13px; color: var(--ink);
+    box-shadow: 0 8px 20px rgba(214,98,168,.2); white-space: nowrap; transition: transform .18s cubic-bezier(.34,1.56,.64,1); }
+  .pet-swap-btn:hover { transform: translateY(-2px) scale(1.03); }
+  .pet-swap-btn input { display: none; }
+  .f2 { animation: bobfloat 5.5s ease-in-out infinite .6s; }
+  .f3 { animation: bobfloat 5s ease-in-out infinite 1.2s; }
+
+  /* hero particles */
+  .particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  @keyframes rise { 0%{transform:translateY(0) scale(.6); opacity:0;} 12%{opacity:.85;} 88%{opacity:.85;} 100%{transform:translateY(-560px) scale(1.05); opacity:0;} }
+  .particles span { position: absolute; bottom: -30px; font-size: 22px; animation: rise linear infinite; }
+
+  /* ── marquee ── */
+  .marquee-sec { padding: 26px 0; background: linear-gradient(90deg, var(--bubblegum), var(--lavender)); overflow: hidden; }
+  .marquee { display: flex; gap: 44px; white-space: nowrap; animation: scroll 32s linear infinite; width: max-content; }
+  @keyframes scroll { to { transform: translateX(-50%); } }
+  .marquee span { font-family: 'Fredoka'; font-weight: 500; font-size: 19px; color: #fff; display: inline-flex; align-items: center; gap: 12px; }
+  .marquee b { opacity: .55; }
+
+  /* ── sections ── */
+  section.block { padding: 90px 0; position: relative; }
+  .sec-head { max-width: 640px; margin: 0 auto 56px; text-align: center; }
+  .kicker { font-family:'Fredoka'; font-weight: 600; color: var(--bubblegum); letter-spacing: 1.5px; text-transform: uppercase; font-size: 14px; margin-bottom: 14px; }
+  .sec-head h2 { font-size: clamp(34px, 4.4vw, 52px); color: var(--ink); }
+  .sec-head p { font-size: 18px; font-weight: 700; color: var(--ink-soft); margin-top: 16px; line-height: 1.5; }
+
+  /* steps */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .step { padding: 26px 24px; position: relative; }
+  .step .num { font-family:'Fredoka'; font-weight: 600; font-size: 15px; color: #fff; width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(160deg, var(--pink), var(--bubblegum)); display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+  .step .ico { font-size: 38px; margin-bottom: 12px; }
+  .step h3 { font-size: 21px; color: var(--ink); margin-bottom: 8px; }
+  .step p { font-weight: 700; font-size: 14.5px; color: var(--ink-soft); line-height: 1.45; }
+
+  /* features */
+  .feat-sec { background: linear-gradient(180deg, #fff 0%, #FFF0F8 100%); }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .feat { padding: 28px 26px; transition: transform .25s cubic-bezier(.34,1.56,.64,1); }
+  .feat:hover { transform: translateY(-6px); }
+  .feat .ico { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 18px; }
+  .feat h3 { font-size: 22px; color: var(--ink); margin-bottom: 10px; }
+  .feat p { font-weight: 700; font-size: 15px; color: var(--ink-soft); line-height: 1.5; }
+  .feat .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
+  .feat .tags span { font-family:'Fredoka'; font-weight: 500; font-size: 12.5px; padding: 5px 11px; border-radius: 999px; background: rgba(255,77,151,.1); color: var(--bubblegum); }
+
+  /* mini gauge */
+  .gauge-wrap { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
+  .gauge-num { font-family:'Fredoka'; font-weight: 600; font-size: 38px; color: var(--ink); line-height: 1; }
+  .gauge-num small { display: block; font-family:'Fredoka'; font-weight: 600; font-size: 12px; color: #fff; background: var(--bubblegum); padding: 4px 11px; border-radius: 999px; margin-top: 6px; white-space: nowrap; }
+
+  /* jury */
+  .jury { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .juror { padding: 22px 16px; text-align: center; transition: transform .25s cubic-bezier(.34,1.56,.64,1); }
+  .juror:hover { transform: translateY(-6px) rotate(-1deg); }
+  .juror .dog { font-size: 48px; margin-bottom: 10px; }
+  .juror h4 { font-family:'Fredoka'; font-weight: 600; font-size: 15.5px; color: var(--ink); }
+  .juror p { font-weight: 700; font-size: 12px; color: var(--ink-soft); margin: 6px 0 12px; min-height: 32px; }
+  .vote { font-family:'Fredoka'; font-weight: 600; font-size: 13px; padding: 6px 12px; border-radius: 999px; display: inline-flex; gap: 5px; align-items: center; }
+  .vote.guilty { color: var(--red); background: rgba(255,84,112,.12); border: 1.5px solid rgba(255,84,112,.3); }
+  .vote.innocent { color: #1E8E6E; background: rgba(52,211,166,.14); border: 1.5px solid rgba(52,211,166,.35); }
+
+  /* verdict showcase */
+  .showcase { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; }
+  .verdict-card { padding: 30px; background: linear-gradient(165deg, rgba(255,255,255,.9), rgba(255,236,246,.85)); max-width: 440px; }
+  .verdict-card .vk-label { font-family:'Nunito'; font-weight: 800; font-size: 12px; letter-spacing: 1.5px; color: var(--ink-soft); text-align: center; }
+  .stamp { display: inline-block; transform: rotate(-3deg); margin: 12px auto; font-family:'Fredoka'; font-weight: 600; font-size: 34px; color: #fff;
+    padding: 12px 26px; border-radius: 20px; background: linear-gradient(160deg, var(--pink), var(--bubblegum)); box-shadow: 0 16px 34px rgba(255,77,151,.45); }
+  .note { padding: 16px 18px; border-radius: 18px; background: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.9); margin-top: 8px; }
+  .note .nh { display: flex; align-items: center; gap: 7px; font-family:'Fredoka'; font-weight: 600; font-size: 13px; color: var(--bubblegum); margin-bottom: 7px; }
+  .note p { font-weight: 700; font-size: 15px; line-height: 1.5; color: var(--ink); }
+  .jury-result { margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 13px;
+    border-radius: 16px; background: rgba(255,84,112,.1); border: 1.5px solid rgba(255,84,112,.3); font-family:'Fredoka'; font-weight: 600; color: #C13A53; font-size: 15px; }
+
+  /* viral */
+  .viral-sec { background: linear-gradient(180deg, #FFF0F8 0%, #F4ECFF 100%); }
+  .viral { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: start; }
+  .tweet { padding: 22px 24px; }
+  .tweet .top { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+  .tweet .pfp { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(160deg, var(--lavender-soft), var(--pink-soft));
+    display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .tweet .name { font-family:'Fredoka'; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .tweet .handle { font-weight: 700; font-size: 13px; color: var(--ink-faint); }
+  .tweet p { font-weight: 700; font-size: 15.5px; line-height: 1.5; color: var(--ink); }
+  .tweet .stats { display: flex; gap: 18px; margin-top: 14px; font-weight: 700; font-size: 13px; color: var(--ink-soft); }
+
+  /* waitlist */
+  .wait-sec { padding: 96px 0; position: relative; overflow: hidden; }
+  .wait-bg { position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, #F4ECFF 0%, #FFE9F4 100%); }
+  .wait-card { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 52px 44px; text-align: center; }
+  .wait-badge { display: inline-flex; align-items: center; gap: 8px; font-family:'Fredoka'; font-weight: 600; font-size: 13px;
+    letter-spacing: 1.2px; text-transform: uppercase; color: var(--lavender); background: rgba(180,155,255,.14);
+    border: 1.5px solid rgba(180,155,255,.3); padding: 7px 15px; border-radius: 999px; margin-bottom: 20px; white-space: nowrap; }
+  .wait-card h2 { font-size: clamp(32px, 4.2vw, 48px); color: var(--ink); }
+  .wait-card .sub { font-size: 18px; font-weight: 700; color: var(--ink-soft); margin: 16px auto 0; max-width: 480px; line-height: 1.5; }
+  .wait-form { display: flex; gap: 10px; max-width: 500px; margin: 30px auto 0; }
+  .wait-input { flex: 1; min-width: 0; padding: 16px 22px; border-radius: 999px; border: 1.5px solid var(--pink-soft);
+    background: #fff; font-family:'Nunito'; font-weight: 700; font-size: 16px; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
+  .wait-input::placeholder { color: var(--ink-faint); }
+  .wait-input:focus { outline: none; border-color: var(--bubblegum); box-shadow: 0 0 0 4px rgba(255,77,151,.14); }
+  .wait-form .btn { flex-shrink: 0; }
+  .wait-msg { min-height: 22px; margin-top: 14px; font-weight: 700; font-size: 14.5px; }
+  .wait-msg.err { color: var(--red); }
+  .wait-note { margin-top: 8px; font-weight: 700; font-size: 13.5px; color: var(--ink-faint); }
+  .wait-proof { display: inline-flex; align-items: center; gap: 11px; margin-top: 26px; font-weight: 700; font-size: 14px; color: var(--ink-soft);
+    background: rgba(255,255,255,.6); padding: 9px 18px 9px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.8); }
+  .wait-proof .avatars span { width: 30px; height: 30px; font-size: 15px; }
+  .wait-success { display: none; flex-direction: column; align-items: center; gap: 14px; }
+  .wait-success.show { display: flex; animation: demopop .5s cubic-bezier(.34,1.56,.64,1) both; }
+  .wait-success .tick { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(160deg, var(--mint), #1FB890);
+    display: flex; align-items: center; justify-content: center; font-size: 34px; color: #fff; box-shadow: 0 12px 28px rgba(52,211,166,.45); }
+  .wait-success h3 { font-family:'Fredoka'; font-weight: 600; font-size: 26px; color: var(--ink); }
+  .wait-success p { font-weight: 700; font-size: 15.5px; color: var(--ink-soft); max-width: 380px; line-height: 1.5; }
+
+  /* final cta */
+  .cta-sec { padding: 100px 0; position: relative; overflow: hidden; }
+  .cta-bg { position: absolute; inset: 0; background: radial-gradient(100% 100% at 50% 0%, #FFE4F2, #EFE4FF 60%, #FFE6DC); z-index: 0; }
+  .cta-card { position: relative; z-index: 2; text-align: center; max-width: 720px; margin: 0 auto; padding: 60px 40px; }
+  .cta-card .mini-medallion { width: 110px; height: 110px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; margin: 0 auto 24px;
+    box-shadow: 0 16px 36px rgba(214,98,168,.35); position: relative; }
+  .cta-card .mini-medallion img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; transform: scale(1.14); transform-origin: 50% 30%; }
+  .cta-card h2 { font-size: clamp(36px, 5vw, 58px); color: var(--ink); }
+  .cta-card p { font-size: 19px; font-weight: 700; color: var(--ink-soft); margin: 18px 0 32px; }
+
+  /* footer */
+  footer { padding: 56px 0 40px; background: var(--ink); color: #fff; }
+  .foot-grid { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 30px; }
+  footer .brand { color: #fff; }
+  footer .tag { color: rgba(255,255,255,.6); font-weight: 700; font-size: 14.5px; margin-top: 14px; max-width: 300px; line-height: 1.5; }
+  .foot-cols { display: flex; gap: 60px; }
+  .foot-col h5 { font-family:'Fredoka'; font-weight: 600; font-size: 15px; margin-bottom: 14px; }
+  .foot-col a { display: block; color: rgba(255,255,255,.65); font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+  .foot-col a:hover { color: var(--pink); }
+  .foot-bottom { margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.12);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: rgba(255,255,255,.5); font-weight: 700; font-size: 13.5px; }
+
+  /* ── embedded demo modal ── */
+  .demo-overlay {
+    position: fixed; inset: 0; z-index: 300; display: none;
+    align-items: center; justify-content: center; padding: 16px;
+    background: rgba(70,30,56,.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .demo-overlay.open { display: flex; animation: demofade .3s ease both; }
+  @keyframes demofade { from { opacity: 0; } to { opacity: 1; } }
+  .demo-phone { position: relative; width: 462px; height: 922px; transform-origin: center center; }
+  .demo-phone iframe { width: 100%; height: 100%; border: none; border-radius: 30px; background: transparent; }
+  .demo-pop { animation: demopop .42s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes demopop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .demo-close {
+    position: fixed; top: 22px; right: 26px; z-index: 320; width: 48px; height: 48px; border-radius: 50%;
+    border: none; cursor: pointer; background: rgba(255,255,255,.9); color: var(--ink); font-size: 22px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1);
+  }
+  .demo-close:hover { transform: scale(1.08) rotate(90deg); }
+  .demo-hint {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 320;
+    background: rgba(255,255,255,.92); color: var(--ink); font-family:'Fredoka'; font-weight: 600; font-size: 14px;
+    padding: 9px 18px; border-radius: 999px; box-shadow: 0 8px 24px rgba(0,0,0,.25); white-space: nowrap;
+  }
+
+  /* reveal (capture-safe: visible unless html.js) */
+  .reveal { opacity: 1; }
+  html.js .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); }
+  html.js .reveal.in { opacity: 1; transform: none; }
+
+  /* responsive */
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 10px; }
+    .hero-visual { min-height: 400px; order: -1; }
+    .medallion { width: 280px; height: 362px; }
+    .halo { width: 340px; height: 400px; }
+    .chip-obj { left: -12px; }
+    .chip-guilty { left: -14px; }
+    .chip-drama { right: -12px; }
+    .gavel-badge { right: -8px; }
+    .nav-links { display: none; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .jury { grid-template-columns: 1fr 1fr 1fr; }
+    .showcase { grid-template-columns: 1fr; gap: 30px; }
+    .verdict-card { margin: 0 auto; }
+    .viral { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 18px; }
+    .features, .steps, .jury { grid-template-columns: 1fr; }
+    .viral { grid-template-columns: 1fr; }
+    .foot-cols { gap: 36px; }
+    .hero h1 { font-size: 46px; }
+    .wait-form { flex-direction: column; }
+    .wait-form .btn { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="wrap">
+      <div class="nav-inner">
+        <a href="#top" class="brand"><span class="paw">🐾</span> Judge Paws</a>
+        <div class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#jury">The Jury</a>
+          <a href="#waitlist">Get the app</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="lang-switch" id="langSwitch">
+            <button data-lang="en" class="on">EN</button>
+            <button data-lang="zh">中</button>
+          </div>
+          <button class="btn btn-primary js-trial">⚖️ Open a Case</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero" id="top">
+    <div class="hero-bg"></div>
+    <div class="blob anim" style="width:380px;height:380px;background:var(--pink);top:-80px;left:-60px;"></div>
+    <div class="blob anim" style="width:340px;height:340px;background:var(--lavender);top:120px;right:-80px;animation-delay:-7s;"></div>
+    <div class="particles" id="heroParticles"></div>
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">🐶 The First AI Relationship Court</span>
+          <h1>Relationship Court<br />Is Now In Session</h1>
+          <p class="lede">Every argument has two sides. Judge Paws hears them both.</p>
+          <div class="hero-cta">
+            <button class="btn btn-primary js-trial">⚖️ Open a Case</button>
+            <button class="btn btn-ghost js-demo">Watch Viral Cases ▶</button>
+          </div>
+          <div class="proof">
+            <div class="avatars"><span>🧑‍⚖️</span><span>💔</span><span>😭</span><span>🫶</span></div>
+            <div>Joined by <b style="color:var(--ink)">2M+</b> chronically online besties · ⭐⭐⭐⭐⭐</div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="halo"></div>
+          <div class="medallion-wrap">
+            <div class="medallion f1">
+              <img src="assets/judge-paws-full.jpg" alt="Judge Paws, a fluffy Pomeranian judge at the bench with a gavel" />
+            </div>
+            <div class="gavel-badge f2">🔨</div>
+            <div class="float-chip chip-obj f2">⚖️ OBJECTION!</div>
+            <div class="float-chip chip-guilty f3">🔨 Guilty</div>
+            <div class="float-chip chip-drama f1">📺 Drama&nbsp; <b>82</b></div>
+            <div class="pet-swap">
+              <label class="pet-swap-btn">📷 <span id="petSwapText">Use your own dog</span>
+                <input type="file" id="petSwapInput" accept="image/*" />
+              </label>
+              <button class="pet-swap-btn" id="petResetBtn" style="display:none;border:none;">↺ <span id="petResetText">Use Judge Paws</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MARQUEE -->
+  <div class="marquee-sec">
+    <div class="marquee" id="marquee"></div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section class="block" id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">From group-chat chaos to closure</div>
+        <h2>Your trial, in four taps</h2>
+        <p>No lawyers. No therapists. Just one very fluffy judge and a jury of opinionated dogs.</p>
+      </div>
+      <div class="steps">
+        <div class="glass step reveal"><div class="num">1</div><div class="ico">💑</div><h3>Pick the relationship</h3><p>Couple, situationship, ex, roommate, bestie, or family group chat.</p></div>
+        <div class="glass step reveal"><div class="num">2</div><div class="ico">🗂️</div><h3>Submit the evidence</h3><p>Drop in screenshots, voice notes, and receipts from any app.</p></div>
+        <div class="glass step reveal"><div class="num">3</div><div class="ico">🔍</div><h3>Paws builds the case</h3><p>He sniffs out a timeline, contradictions, red flags, and turning points.</p></div>
+        <div class="glass step reveal"><div class="num">4</div><div class="ico">🔨</div><h3>Get your verdict</h3><p>A hilarious, screenshot-ready ruling you'll send to the group chat instantly.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="block feat-sec" id="features">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">Disturbingly accurate</div>
+        <h2>The features that get screenshotted</h2>
+        <p>Every case comes with a full forensic breakdown — built to be funny, weirdly insightful, and extremely shareable.</p>
+      </div>
+      <div class="features">
+        <div class="glass feat reveal">
+          <div class="ico" style="background:rgba(255,77,151,.12)">📺</div>
+          <h3>Drama Meter</h3>
+          <p>From "Healthy Discussion" to full "Season Finale," measured to the decimal.</p>
+          <div class="gauge-wrap">
+            <svg width="120" height="72" viewBox="0 0 240 140">
+              <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#34D3A6"/><stop offset="50%" stop-color="#FFC24B"/><stop offset="100%" stop-color="#FF4D97"/></linearGradient></defs>
+              <path d="M 20 120 A 100 100 0 0 1 220 120" fill="none" stroke="rgba(180,140,165,.18)" stroke-width="20" stroke-linecap="round"/>
+              <path d="M 20 120 A 100 100 0 0 1 220 120" fill="none" stroke="url(#g1)" stroke-width="20" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="56"/>
+              <g transform="rotate(-32 120 120)"><line x1="120" y1="120" x2="206" y2="120" stroke="#5A2D49" stroke-width="5" stroke-linecap="round"/><circle cx="120" cy="120" r="10" fill="#5A2D49"/></g>
+            </svg>
+            <div class="gauge-num">82<small>Season Finale</small></div>
+          </div>
+        </div>
+        <div class="glass feat reveal">
+          <div class="ico" style="background:rgba(255,84,112,.12)">🚩</div>
+          <h3>Red Flag Detector</h3>
+          <p>Ghosting, gaslighting, passive aggression — flagged and filed as evidence.</p>
+          <div class="tags"><span>Left on read 6h</span><span>Replied "k"</span><span>"You're overthinking"</span></div>
+        </div>
+        <div class="glass feat reveal">
+          <div class="ico" style="background:rgba(52,211,166,.14)">💚</div>
+          <h3>Green Flag Detector</h3>
+          <p>Accountability, empathy, an actual apology — rewarded with shiny badges.</p>
+          <div class="tags"><span>Apologized</span><span>Named a feeling</span><span>Stayed calm</span></div>
+        </div>
+        <div class="glass feat reveal">
+          <div class="ico" style="background:rgba(180,155,255,.16)">💳</div>
+          <h3>Relationship Credit Score</h3>
+          <p>Each party gets a score. Yes, you can frame it. Yes, they will be mad.</p>
+          <div class="tags"><span>You · 84</span><span>Them · 78</span></div>
+        </div>
+        <div class="glass feat reveal">
+          <div class="ico" style="background:rgba(255,176,136,.18)">🥧</div>
+          <h3>Who Started It?</h3>
+          <p>A giant animated blame pie assigns relationship responsibility down to the percent.</p>
+          <div class="tags"><span>Them · 67%</span><span>You · 33%</span></div>
+        </div>
+        <div class="glass feat reveal">
+          <div class="ico" style="background:rgba(255,194,75,.18)">🔮</div>
+          <h3>Alternate Timeline</h3>
+          <p>"What if he replied sooner?" Paws generates the multiverse where you both communicated.</p>
+          <div class="tags"><span>Branch A</span><span>Branch B</span><span>Peace ✦</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JURY -->
+  <section class="block" id="jury">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">Meet the bench</div>
+        <h2>A jury of five very different dogs</h2>
+        <p>The Golden forgives, the Shiba doubts, the Chihuahua convicts, the Husky feels, the Corgi watches. Five personalities, five perspectives — every vote cast live, so the verdict is actually fair.</p>
+      </div>
+      <div class="jury">
+        <div class="glass juror reveal"><div class="dog">🦮</div><h4>Golden Retriever</h4><p>"Forgive everyone, honestly."</p><span class="vote innocent">😇 Innocent</span></div>
+        <div class="glass juror reveal"><div class="dog">🐕</div><h4>Shiba Inu</h4><p>"I need more evidence."</p><span class="vote guilty">🔨 Guilty</span></div>
+        <div class="glass juror reveal"><div class="dog">🐶</div><h4>Chihuahua</h4><p>"Everyone is guilty."</p><span class="vote guilty">🔨 Guilty</span></div>
+        <div class="glass juror reveal"><div class="dog">🐺</div><h4>Husky</h4><p>"Too emotional, honestly."</p><span class="vote guilty">🔨 Guilty</span></div>
+        <div class="glass juror reveal"><div class="dog">🐕‍🦺</div><h4>Corgi</h4><p>"Just here for the drama."</p><span class="vote guilty">🍿 Guilty</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERDICT SHOWCASE -->
+  <section class="block feat-sec" id="verdict">
+    <div class="wrap">
+      <div class="showcase">
+        <div class="reveal">
+          <div class="kicker">The main event</div>
+          <h2 style="font-size:clamp(34px,4.4vw,52px);color:var(--ink);margin-bottom:18px;">A verdict worth posting</h2>
+          <p style="font-size:18px;font-weight:700;color:var(--ink-soft);line-height:1.55;margin-bottom:26px;max-width:420px;">
+            Every ruling lands as a polished, vertical card — drama score, jury tally, the funny-but-true judge's note, and a ready-to-paste caption. Built for the screenshot, designed for the group chat.</p>
+          <button class="btn btn-primary js-trial">Get my verdict 🐾</button>
+        </div>
+        <div class="glass verdict-card reveal">
+          <div class="vk-label">JORDAN IS FOUND</div>
+          <div class="center"><div class="stamp">PAW-SITIVELY GUILTY 🔨</div></div>
+          <div class="note">
+            <div class="nh">🐾 Judge Paws' ruling</div>
+            <p>The court finds that sending "k" to a six-hour silence constitutes emotional warfare. Both parties are sentenced to one (1) honest conversation.</p>
+          </div>
+          <div class="jury-result">🐕🐺🐶🦮 &nbsp;Convicted by 4 of 5 dogs</div>
+          <div class="center" style="margin-top:16px;font-family:'Fredoka';font-weight:600;font-size:13px;color:var(--ink-faint);">🐾 judgepaws.app</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRAL -->
+  <section class="block viral-sec">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">Currently on your FYP</div>
+        <h2>The clips write themselves</h2>
+      </div>
+      <div class="viral">
+        <div class="glass tweet reveal"><div class="top"><div class="pfp">😭</div><div><div class="name">mads</div><div class="handle">@madsisdone</div></div></div><p>my boyfriend got convicted by 4 AI dogs for sending "k" and honestly? justice.</p><div class="stats"><span>💬 1.2K</span><span>🔁 18K</span><span>❤️ 240K</span></div></div>
+        <div class="glass tweet reveal"><div class="top"><div class="pfp">🫠</div><div><div class="name">jpeg</div><div class="handle">@jpegenjoyer</div></div></div><p>the Chihuahua juror voted guilty before I even finished uploading the screenshots 💀</p><div class="stats"><span>💬 890</span><span>🔁 9.4K</span><span>❤️ 120K</span></div></div>
+        <div class="glass tweet reveal"><div class="top"><div class="pfp">😩</div><div><div class="name">tori 🩷</div><div class="handle">@toritori</div></div></div><p>judge paws called my situationship "a national security threat" I am UNWELL</p><div class="stats"><span>💬 2.1K</span><span>🔁 31K</span><span>❤️ 410K</span></div></div>
+        <div class="glass tweet reveal"><div class="top"><div class="pfp">🧍</div><div><div class="name">devon</div><div class="handle">@dvn</div></div></div><p>asked it to settle a roommate dish argument. the verdict was 9 paragraphs. we are moving out.</p><div class="stats"><span>💬 640</span><span>🔁 7.2K</span><span>❤️ 88K</span></div></div>
+        <div class="glass tweet reveal"><div class="top"><div class="pfp">🥲</div><div><div class="name">priya</div><div class="handle">@priyamaybe</div></div></div><p>AI court ruled that I was the red flag and the Drama Meter hit "Season Finale." new phone who dis</p><div class="stats"><span>💬 1.5K</span><span>🔁 22K</span><span>❤️ 305K</span></div></div>
+        <div class="glass tweet reveal"><div class="top"><div class="pfp">😇</div><div><div class="name">lena</div><div class="handle">@lenabean</div></div></div><p>the golden retriever juror forgave my ex and now I'm crying at the cuteness instead of the breakup</p><div class="stats"><span>💬 770</span><span>🔁 11K</span><span>❤️ 160K</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section class="wait-sec" id="waitlist">
+    <div class="wait-bg"></div>
+    <div class="blob anim" style="width:300px;height:300px;background:var(--lavender);top:-60px;left:8%;"></div>
+    <div class="blob anim" style="width:260px;height:260px;background:var(--peach);bottom:-50px;right:10%;animation-delay:-6s;"></div>
+    <div class="wrap">
+      <div class="glass wait-card reveal">
+        <div id="waitForm">
+          <span class="wait-badge">📱 Coming soon · iOS &amp; Android</span>
+          <h2>Get the app before everyone else</h2>
+          <p class="sub">The web courtroom is <b style="color:var(--bubblegum)">live now</b> — but the app (push-notification verdicts, voice trials &amp; Paws Premium) drops soon. Join the list to get first paws.</p>
+          <form class="wait-form" id="waitlistForm" novalidate>
+            <input class="wait-input" id="waitEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address" />
+            <button class="btn btn-primary" type="submit">Join the list 🐾</button>
+          </form>
+          <div class="wait-msg" id="waitMsg" role="status" aria-live="polite"></div>
+          <div class="wait-note">No spam, just one very excited puppy. Unsubscribe anytime.</div>
+          <div class="wait-proof">
+            <div class="avatars"><span>😭</span><span>🫠</span><span>😩</span><span>🥹</span></div>
+            <span><b style="color:var(--ink)" id="waitCount">9,412</b> besties already waiting</span>
+          </div>
+        </div>
+        <div class="wait-success" id="waitSuccess">
+          <div class="tick">✓</div>
+          <h3>You’re on the list! 🐶</h3>
+          <p>Judge Paws will summon you the moment the app is ready. Meanwhile, the web court is open — go take someone to trial.</p>
+          <button class="btn btn-primary js-trial" type="button" style="margin-top:4px;">Open the courtroom 🔨</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta-sec">
+    <div class="cta-bg"></div>
+    <div class="blob anim" style="width:300px;height:300px;background:var(--pink);bottom:-60px;left:10%;"></div>
+    <div class="blob anim" style="width:280px;height:280px;background:var(--lavender);top:-40px;right:12%;animation-delay:-5s;"></div>
+    <div class="wrap">
+      <div class="glass cta-card reveal">
+        <div class="mini-medallion"><img src="assets/judge-paws.jpg" alt="Judge Paws" /></div>
+        <h2>Ready to take them to court?</h2>
+        <p>The dog is waiting. The jury is seated. The group chat is about to lose it.</p>
+        <button class="btn btn-primary js-trial" style="font-size:19px;padding:18px 38px;">⚖️ Open a Case</button>
+        <div style="margin-top:18px;font-weight:700;color:var(--ink-soft);font-size:14px;">Free to start · No card · 100% chronically online</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <div class="brand"><span class="paw">🐾</span> Judge Paws</div>
+          <p class="tag">The first AI relationship court. Pet, therapist, comedian, detective, and judge — all in one fluffy package.</p>
+        </div>
+        <div class="foot-cols">
+          <div class="foot-col"><h5>Product</h5><a href="#how">How it works</a><a href="#features">Features</a><a href="#jury">The Jury</a><a href="#verdict">Verdicts</a></div>
+          <div class="foot-col"><h5>Company</h5><a href="#top">About</a><a href="#top">Careers</a><a href="#top">Press kit</a><a href="#top">Contact</a></div>
+          <div class="foot-col"><h5>Legal*</h5><a href="#top">Privacy</a><a href="#top">Terms</a><a href="#top">*Not real legal advice</a><a href="#top">But the dog is never wrong</a></div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <div>© 2026 Judge Paws, Inc. Made with 🩷 and questionable text messages.</div>
+        <div>🐾 judgepaws.app</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- EMBEDDED INTERACTIVE DEMO -->
+  <div class="demo-overlay" id="demoOverlay" aria-hidden="true">
+    <button class="demo-close" id="demoClose" aria-label="Close demo">✕</button>
+    <div class="demo-phone demo-pop" id="demoPhone">
+      <iframe id="demoFrame" data-src="index.html" title="Judge Paws interactive demo" allow="clipboard-write"></iframe>
+    </div>
+    <div class="demo-hint">🐾 Live demo — tap “Start a Trial” inside</div>
+  </div>
+
+  <script>
+    /* ───────────────────────────────────────────────────────────
+       CONFIG — edit these two lines
+       ─────────────────────────────────────────────────────────── */
+    var TRIAL_URL = 'index.html';   // ← your LIVE deployed app URL
+    var WAITLIST_ENDPOINT = '/api/waitlist';                // ← optional: POST emails here (e.g. Formspree / your API). Leave '' to store locally only.
+
+    // hero particles
+    (function () {
+      var box = document.getElementById('heroParticles');
+      var g = ['💕','🐾','✨','💗','⚖️','🩷'];
+      for (var i = 0; i < 14; i++) {
+        var s = document.createElement('span');
+        s.textContent = g[i % g.length];
+        s.style.left = Math.random() * 100 + '%';
+        s.style.animationDuration = (6 + Math.random() * 5) + 's';
+        s.style.animationDelay = (Math.random() * 6) + 's';
+        s.style.fontSize = (15 + Math.random() * 16) + 'px';
+        box.appendChild(s);
+      }
+    })();
+
+    // marquee content per language (duplicated for seamless loop)
+    var JP_MARQUEE = {
+      en: [
+        '"My boyfriend got convicted by 4 AI dogs."',
+        '"The Chihuahua voted guilty immediately."',
+        '"My situationship is a national security threat."',
+        '"Sending “ok.” was emotional warfare."',
+        '"AI court ruled that I was the red flag."',
+        '"Respectfully, you both need therapy."'
+      ],
+      zh: [
+        '“我男友被 4 只 AI 狗判了刑。”',
+        '“吉娃娃秒投有罪。”',
+        '“我的暧昧关系被认定为国家安全威胁。”',
+        '“回一句『嗯。』属于情感战争。”',
+        '“AI 法庭裁定：我才是那个红旗。”',
+        '“恕本汪直言，你俩都该看心理医生。”'
+      ]
+    };
+    function jpBuildMarquee(lang) {
+      var m = document.getElementById('marquee');
+      var html = JP_MARQUEE[lang].map(function (t) { return '<span>' + t + ' <b>🐾</b></span>'; }).join('');
+      m.innerHTML = html + html;
+    }
+    jpBuildMarquee('en');
+
+    // reveal on scroll
+    (function () {
+      if (!('IntersectionObserver' in window)) {
+        document.querySelectorAll('.reveal').forEach(function (e) { e.classList.add('in'); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.reveal').forEach(function (e, i) {
+        e.style.transitionDelay = (i % 4) * 70 + 'ms';
+        io.observe(e);
+      });
+    })();
+    // embedded demo modal
+    (function () {
+      var overlay = document.getElementById('demoOverlay');
+      var frame = document.getElementById('demoFrame');
+      var phone = document.getElementById('demoPhone');
+      var loaded = false;
+
+      function fit() {
+        var s = Math.min(1, (window.innerHeight - 30) / 922, (window.innerWidth - 32) / 462);
+        phone.style.transform = 'scale(' + s + ')';
+      }
+      function open() {
+        if (!loaded) { frame.src = frame.getAttribute('data-src'); loaded = true; }
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        fit();
+      }
+      function close() {
+        overlay.classList.remove('open');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+
+      // "Watch Viral Cases" opens the in-page demo; trial buttons go to the live app
+      function openTrial() { window.open(TRIAL_URL, '_blank', 'noopener'); }
+      document.querySelectorAll('.js-demo').forEach(function (b) { b.addEventListener('click', open); });
+      document.querySelectorAll('.js-trial').forEach(function (b) { b.addEventListener('click', openTrial); });
+      document.getElementById('demoClose').addEventListener('click', close);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+      window.addEventListener('resize', function () { if (overlay.classList.contains('open')) fit(); });
+    })();
+
+    // waitlist
+    (function () {
+      var form = document.getElementById('waitlistForm');
+      var input = document.getElementById('waitEmail');
+      var msg = document.getElementById('waitMsg');
+      var formWrap = document.getElementById('waitForm');
+      var success = document.getElementById('waitSuccess');
+      var countEl = document.getElementById('waitCount');
+      var KEY = 'judgepaws_waitlist';
+      var valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      // bump the displayed count by how many have signed up on this device
+      try {
+        var saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+        if (saved.length) countEl.textContent = (9412 + saved.length).toLocaleString();
+      } catch (e) {}
+
+      function store(email) {
+        try {
+          var list = JSON.parse(localStorage.getItem(KEY) || '[]');
+          if (list.indexOf(email) === -1) list.push(email);
+          localStorage.setItem(KEY, JSON.stringify(list));
+        } catch (e) {}
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = input.value.trim();
+        msg.className = 'wait-msg';
+        if (!valid.test(email)) {
+          msg.textContent = (window.__jpLang === 'zh') ? '这个邮箱看起来有点可疑，再试试？🐾' : 'Hmm, that email looks a little sus. Try again? 🐾';
+          msg.classList.add('err');
+          input.focus();
+          return;
+        }
+        store(email);
+        // OPTIONAL backend hook — fires only if you set WAITLIST_ENDPOINT above
+        if (WAITLIST_ENDPOINT) {
+          fetch(WAITLIST_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, source: 'landing' })
+          }).catch(function () {});
+        }
+        formWrap.style.display = 'none';
+        success.classList.add('show');
+      });
+    })();
+
+    // pet swap — visitors can make their own dog the judge (shared with the demo via localStorage)
+    (function () {
+      var KEY = 'judgepaws_pet';
+      var imgs = [document.querySelector('.medallion img'), document.querySelector('.cta-card .mini-medallion img')].filter(Boolean);
+      var defaults = imgs.map(function (i) { return i.src; });
+      var input = document.getElementById('petSwapInput');
+      var resetBtn = document.getElementById('petResetBtn');
+      function show(custom) {
+        imgs.forEach(function (img, i) { img.src = custom || defaults[i]; });
+        resetBtn.style.display = custom ? 'flex' : 'none';
+      }
+      input.addEventListener('change', function (e) {
+        var f = e.target.files && e.target.files[0];
+        if (!f) return;
+        var r = new FileReader();
+        r.onload = function (ev) {
+          try { localStorage.setItem(KEY, ev.target.result); } catch (err) {}
+          show(ev.target.result);
+        };
+        r.readAsDataURL(f);
+        e.target.value = '';
+      });
+      resetBtn.addEventListener('click', function () {
+        try { localStorage.removeItem(KEY); } catch (err) {}
+        show(null);
+      });
+      try { var saved = localStorage.getItem(KEY); if (saved) show(saved); } catch (e) {}
+    })();
+
+    // ───── bilingual EN / 中文 ─────
+    (function () {
+      var ZH = {
+        '.nav-links a[href="#how"]': '玩法',
+        '.nav-links a[href="#features"]': '功能',
+        '.nav-links a[href="#jury"]': '陪审团',
+        '.nav-links a[href="#waitlist"]': '获取 App',
+        '.nav-inner .btn.js-trial': '⚖️ 立案审理',
+        '.eyebrow': '🐶 全球首个 AI 关系法庭',
+        '.hero h1': '关系法庭<br>现已开庭',
+        '.hero .lede': '每段争吵都有两面。汪汪法官，两面都听。',
+        '.hero-cta .btn-primary': '⚖️ 立案审理',
+        '.hero-cta .btn-ghost': '围观热门案件 ▶',
+        '.proof > div:last-child': '已有 <b style="color:var(--ink)">200 万+</b> 重度网上冲浪选手加入 · ⭐⭐⭐⭐⭐',
+        '.chip-obj': '⚖️ 反对！',
+        '.chip-guilty': '🔨 有罪',
+        '.chip-drama': '📺 狗血&nbsp; <b>82</b>',
+        '#how .kicker': '从群聊大战到尘埃落定',
+        '#how .sec-head h2': '你的庭审，四步搞定',
+        '#how .sec-head p': '不需要律师，不需要心理咨询师。只有一位毛茸茸的法官，和一群意见很大的狗。',
+        '#how .steps .step:nth-child(1) h3': '选择关系',
+        '#how .steps .step:nth-child(1) p': '情侣、暧昧、前任、室友、闺蜜，或家族群聊。',
+        '#how .steps .step:nth-child(2) h3': '提交证据',
+        '#how .steps .step:nth-child(2) p': '截图、聊天记录、各种实锤，来自任何 App。',
+        '#how .steps .step:nth-child(3) h3': '汪汪构建案件',
+        '#how .steps .step:nth-child(3) p': '它会嗅出时间线、矛盾点、红旗与转折点。',
+        '#how .steps .step:nth-child(4) h3': '领取判决',
+        '#how .steps .step:nth-child(4) p': '一份好笑又上头、截图就能发群的裁决。',
+        '#features .kicker': '准得有点过分',
+        '#features .sec-head h2': '这些功能，专门被截图疯传',
+        '#features .sec-head p': '每个案件都附带完整拆解——好笑、意外地深刻、并且极度适合分享。',
+        '.features .feat:nth-child(1) h3': '狗血指数',
+        '.features .feat:nth-child(1) p': '从「和谐讨论」到「大结局级」，精确到小数点。',
+        '.features .feat:nth-child(1) .gauge-num small': '大结局级',
+        '.features .feat:nth-child(2) h3': '红旗探测器',
+        '.features .feat:nth-child(2) p': '已读不回、煤气灯、阴阳怪气——一一标记，立案存档。',
+        '.features .feat:nth-child(2) .tags': '<span>已读不回 6 小时</span><span>只回了个「嗯」</span><span>「是你想太多」</span>',
+        '.features .feat:nth-child(3) h3': '绿灯探测器',
+        '.features .feat:nth-child(3) p': '担当、共情、一句真诚的道歉——发放闪亮奖章。',
+        '.features .feat:nth-child(3) .tags': '<span>道歉了</span><span>说出了感受</span><span>保持冷静</span>',
+        '.features .feat:nth-child(4) h3': '关系信用分',
+        '.features .feat:nth-child(4) p': '双方各得一分。可以裱起来。对方一定会生气。',
+        '.features .feat:nth-child(4) .tags': '<span>你 · 84</span><span>对方 · 78</span>',
+        '.features .feat:nth-child(5) h3': '谁先挑起的？',
+        '.features .feat:nth-child(5) p': '一张巨大的动态甩锅饼图，把责任精确到百分比。',
+        '.features .feat:nth-child(5) .tags': '<span>对方 · 67%</span><span>你 · 33%</span>',
+        '.features .feat:nth-child(6) h3': '平行时间线',
+        '.features .feat:nth-child(6) p': '「如果他早点回呢？」汪汪生成你们好好沟通的平行宇宙。',
+        '.features .feat:nth-child(6) .tags': '<span>分支 A</span><span>分支 B</span><span>和平 ✦</span>',
+        '#jury .kicker': '认识一下陪审席',
+        '#jury .sec-head h2': '五只性格迥异的狗狗陪审团',
+        '#jury .sec-head p': '金毛宽容、柴犬较真、吉娃娃严苛、哈士奇感性、柯基爱看戏。五种性格、五种视角，逐案实时投票——不同立场的碰撞，才是公平的裁决。',
+        '.jury .juror:nth-child(1) h4': '金毛寻回犬',
+        '.jury .juror:nth-child(1) p': '“原谅所有人吧，真的。”',
+        '.jury .juror:nth-child(1) .vote': '😇 无罪',
+        '.jury .juror:nth-child(2) h4': '柴犬',
+        '.jury .juror:nth-child(2) p': '“我需要更多证据。”',
+        '.jury .juror:nth-child(2) .vote': '🔨 有罪',
+        '.jury .juror:nth-child(3) h4': '吉娃娃',
+        '.jury .juror:nth-child(3) p': '“人人都有罪。”',
+        '.jury .juror:nth-child(3) .vote': '🔨 有罪',
+        '.jury .juror:nth-child(4) h4': '哈士奇',
+        '.jury .juror:nth-child(4) p': '“说实话，太情绪化了。”',
+        '.jury .juror:nth-child(4) .vote': '🔨 有罪',
+        '.jury .juror:nth-child(5) h4': '柯基',
+        '.jury .juror:nth-child(5) p': '“纯属来看戏。”',
+        '.jury .juror:nth-child(5) .vote': '🍿 有罪',
+        '#verdict .kicker': '重头戏',
+        '#verdict .showcase h2': '一份值得发出去的判决',
+        '#verdict .showcase p': '每份裁决都是一张精致的竖版卡片——狗血指数、陪审团票数、好笑但扎心的判词，外加一条可直接粘贴的文案。为截图而生，为群聊而设计。',
+        '#verdict .btn-primary': '领取我的判决 🐾',
+        '.verdict-card .vk-label': '本庭认定 对方',
+        '.verdict-card .stamp': '汪定有罪 🔨',
+        '.verdict-card .nh': '🐾 汪汪法官判词',
+        '.verdict-card .note p': '本庭认定：对长达六小时的沉默回复一句「嗯」，构成情感战争。双方各被判处进行一次（1）坦诚对话。',
+        '.verdict-card .jury-result': '🐕🐺🐶🦮 &nbsp;被 4/5 只狗狗定罪',
+        '.viral-sec .kicker': '此刻正在你的首页刷屏',
+        '.viral-sec .sec-head h2': '这些梗自己会传播',
+        '.viral .tweet:nth-child(1) p': '我男友因为回了句「嗯」被 4 只 AI 狗定罪了，讲真？大快人心。',
+        '.viral .tweet:nth-child(2) p': '截图还没传完，吉娃娃陪审员就投了有罪 💀',
+        '.viral .tweet:nth-child(3) p': '汪汪法官说我的暧昧关系是「国家安全威胁」，我没了',
+        '.viral .tweet:nth-child(4) p': '让它裁室友的洗碗纠纷，判词写了 9 段。我们准备搬家了。',
+        '.viral .tweet:nth-child(5) p': 'AI 法庭裁定我才是红旗，狗血指数直接「大结局级」。换新手机了谁啊',
+        '.viral .tweet:nth-child(6) p': '金毛陪审员原谅了我前任，现在我哭的是可爱不是分手',
+        '.wait-badge': '📱 即将上线 · iOS & Android',
+        '#waitForm h2': '比所有人都先拿到 App',
+        '#waitForm .sub': '网页版法庭<b style="color:var(--bubblegum)">已经上线</b>——App 版（判决推送、语音庭审 & Paws 会员）马上就来。加入名单，抢先一爪。',
+        '#waitlistForm .btn': '加入名单 🐾',
+        '.wait-note': '不发垃圾邮件，只有一只非常激动的小狗。随时可退订。',
+        '.wait-proof > span': '<b style="color:var(--ink)" id="waitCount">9,412</b> 位宝子已在排队',
+        '.wait-success h3': '你已经在名单上了！🐶',
+        '.wait-success p': 'App 一就绪，汪汪法官立刻传唤你。眼下网页法庭已开门——去把某人送上法庭吧。',
+        '.wait-success .btn': '进入法庭 🔨',
+        '.cta-card h2': '准备好送他们上法庭了吗？',
+        '.cta-card > p': '狗狗就位。陪审团就座。群聊即将炸锅。',
+        '.cta-card .btn-primary': '⚖️ 立案审理',
+        '.cta-card > div:last-child': '免费开始 · 无需信用卡 · 100% 重度网上冲浪',
+        'footer .tag': '全球首个 AI 关系法庭。宠物、心理师、谐星、侦探、法官——合体成一只毛茸茸的存在。',
+        '.foot-cols .foot-col:nth-child(1)': '<h5>产品</h5><a href="#how">玩法</a><a href="#features">功能</a><a href="#jury">陪审团</a><a href="#verdict">判决</a>',
+        '.foot-cols .foot-col:nth-child(2)': '<h5>公司</h5><a href="#top">关于</a><a href="#top">招聘</a><a href="#top">媒体资料</a><a href="#top">联系我们</a>',
+        '.foot-cols .foot-col:nth-child(3)': '<h5>法律*</h5><a href="#top">隐私</a><a href="#top">条款</a><a href="#top">*不构成真实法律建议</a><a href="#top">但狗狗永远是对的</a>',
+        '.foot-bottom div:first-child': '© 2026 Judge Paws, Inc. 用 🩷 和一些可疑的聊天记录制作。',
+        '.demo-hint': '🐾 在线演示 —— 在里面点「立案审理」',
+        '#petSwapText': '换成你家狗狗',
+        '#petResetText': '换回汪汪法官'
+      };
+      var EN = {};
+      window.__jpLang = 'en';
+
+      function apply(lang) {
+        window.__jpLang = lang;
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+        var count = document.getElementById('waitCount');
+        var countVal = count ? count.textContent : null;
+        Object.keys(ZH).forEach(function (sel) {
+          var el = document.querySelector(sel);
+          if (!el) return;
+          if (!(sel in EN)) EN[sel] = el.innerHTML;
+          el.innerHTML = (lang === 'zh') ? ZH[sel] : EN[sel];
+        });
+        var c2 = document.getElementById('waitCount');
+        if (c2 && countVal) c2.textContent = countVal;
+        var em = document.getElementById('waitEmail');
+        if (em) em.placeholder = (lang === 'zh') ? '你的邮箱' : 'you@email.com';
+        jpBuildMarquee(lang);
+        document.querySelectorAll('#langSwitch button').forEach(function (b) {
+          b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+        });
+        try { localStorage.setItem('judgepaws_lang', lang); } catch (e) {}
+      }
+
+      document.querySelectorAll('#langSwitch button').forEach(function (b) {
+        b.addEventListener('click', function () { apply(b.getAttribute('data-lang')); });
+      });
+
+      var init = 'en';
+      try {
+        var saved = localStorage.getItem('judgepaws_lang');
+        if (saved === 'zh' || saved === 'en') init = saved;
+        else if ((navigator.language || '').toLowerCase().indexOf('zh') === 0) init = 'zh';
+      } catch (e) {}
+      if (init === 'zh') apply('zh');
+    })();
+  </script>
+
+  <template id="__bundler_thumbnail" data-bg-color="#FFE4F2">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#FFE4F2"/>
+      <text x="50" y="62" font-size="46" text-anchor="middle">🐶</text>
+    </svg>
+  </template>
+</body>
+</html>
