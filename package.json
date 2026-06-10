@@ -8,7 +8,8 @@
     "start": "node server.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.69.0"
+    "@anthropic-ai/sdk": "^0.69.0",
+    "stripe": "^22.2.0"
   },
   "engines": {
     "node": ">=18"

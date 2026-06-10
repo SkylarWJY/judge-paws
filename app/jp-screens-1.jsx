@@ -189,6 +189,22 @@ function UploadScreen({ go, state, setState, chaos, off }) {
 
       <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
 
+      {/* judge mode — Savage is Judge Paws+ (enforced server-side) */}
+      <div style={{ position: 'relative', zIndex: 3, padding: '2px 18px 0', flexShrink: 0, display: 'flex', gap: 8 }}>
+        {[{ id: 'default', label: '⚖️ Classic' }, { id: 'savage', label: '🔥 Savage' }].map(m => {
+          const active = (state.mode || 'default') === m.id;
+          const locked = m.id === 'savage' && (!window.JPB || !JPB.subscribed());
+          return (
+            <button key={m.id} onClick={() => setState(s => ({ ...s, mode: m.id }))} className="jp-tap" style={{
+              padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 13.5,
+              border: active ? `1.5px solid ${JP.bubblegum}` : '1.5px solid rgba(255,255,255,0.9)',
+              background: active ? 'rgba(255,77,151,0.12)' : 'rgba(255,255,255,0.6)',
+              color: active ? '#b32a73' : JP.ink,
+            }}>{m.label}{locked ? ' 🔒' : ''}</button>
+          );
+        })}
+      </div>
+
       {/* source chips — tap to attach a screenshot from that app */}
       <div style={{ position: 'relative', zIndex: 3, padding: '4px 18px 0', flexShrink: 0,
         display: 'flex', gap: 9, flexWrap: 'wrap' }}>

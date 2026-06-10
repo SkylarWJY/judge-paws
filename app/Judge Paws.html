@@ -99,6 +99,7 @@
   <script type="text/babel" src="ios-frame.jsx"></script>
   <script type="text/babel" src="tweaks-panel.jsx"></script>
   <script type="text/babel" src="jp-theme.jsx"></script>
+  <script type="text/babel" src="jp-billing.jsx"></script>
   <script type="text/babel" src="jp-viz.jsx"></script>
   <script type="text/babel" src="jp-screens-1.jsx"></script>
   <script type="text/babel" src="jp-screens-2.jsx"></script>
@@ -132,7 +133,7 @@
     function App() {
       const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
       const [screen, setScreen] = useState('home');
-      const [state, setState] = useState({ relType: null, evidence: [], caseData: buildCase('couple') });
+      const [state, setState] = useState({ relType: null, evidence: [], mode: 'default', caseData: buildCase('couple') });
       const [toast, setToast] = useState(false);
 
       const particlesOff = t.particles === 'off';
@@ -142,7 +143,7 @@
       const go = useCallback((next) => {
         setState(s => {
           if (next === 'build') return { ...s, caseData: buildCase(s.relType || 'couple') };
-          if (next === 'home') return { relType: null, evidence: [], caseData: buildCase('couple') };
+          if (next === 'home') return { relType: null, evidence: [], mode: 'default', caseData: buildCase('couple') };
           return s;
         });
         setScreen(next);

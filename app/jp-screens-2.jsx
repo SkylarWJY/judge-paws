@@ -31,18 +31,20 @@ function buildCase(relType) {
 // ─────────── backend trial (real AI verdict) ───────────
 // Calls POST /api/trials and merges the result into the case object.
 // Falls back silently to buildCase() if the backend is unavailable.
-async function fetchTrial(relType, evidence) {
+async function fetchTrial(relType, evidence, mode, email) {
   const res = await fetch('/api/trials', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       relationshipType: relType || 'couple',
+      mode: mode || 'default',
+      email: email || '',
       evidence: (evidence || []).map(e => e.dataUrl
         ? { label: e?.src?.label, kind: 'image', mediaType: e.mediaType || 'image/jpeg', data: e.dataUrl.split(',')[1] }
         : { label: e?.src?.label, text: e?.text }),
     }),
   });
-  if (!res.ok) throw new Error('trial failed');
+  if (!res.ok) { const err = new Error('trial ' + res.status); err.status = res.status; throw err; }
   return res.json();
 }
 function withTheme(api) {
@@ -132,20 +134,44 @@ const BUILD_STEPS = [
 function BuildScreen({ go, state, setState, chaos, off, mascot }) {
   const [done, setDone] = React.useState(0); // how many steps complete
   const [settled, setSettled] = React.useState(false); // backend call resolved or failed
+  const [paywall, setPaywall] = React.useState(() => window.JPB ? !JPB.canRun() : false);
+  const startedRef = React.useRef(false);
+
+  // checklist animation (runs once the paywall is cleared)
   React.useEffect(() => {
+    if (paywall) return;
     if (done >= BUILD_STEPS.length) return;
     const t = setTimeout(() => setDone(d => d + 1), done === 0 ? 500 : 720);
     return () => clearTimeout(t);
-  }, [done]);
-  // Real AI verdict: fetch once on mount, upgrade caseData; fall back silently.
+  }, [done, paywall]);
+
+  // Real AI verdict — gated by free credits; premium modes enforced server-side (402).
   React.useEffect(() => {
+    if (paywall || startedRef.current) return;
+    startedRef.current = true;
     let alive = true;
-    fetchTrial(state && state.relType, state && state.evidence)
-      .then(api => { if (alive && api && api.ruling && setState) setState(s => ({ ...s, caseData: withTheme(api) })); })
-      .catch(() => {}) // keep the hardcoded buildCase() result
+    const email = window.JPB ? JPB.email() : '';
+    fetchTrial(state && state.relType, state && state.evidence, state && state.mode, email)
+      .then(api => {
+        if (!alive) return;
+        if (api && api.ruling && setState) setState(s => ({ ...s, caseData: withTheme(api) }));
+        if (window.JPB) JPB.consume(); // count a successful verdict against today's free limit
+      })
+      .catch(err => {
+        if (err && err.status === 402) { if (alive) { startedRef.current = false; setPaywall(true); } } // premium mode → upgrade
+        // other errors: keep the sample caseData so the demo never breaks
+      })
       .finally(() => { if (alive) setSettled(true); });
     return () => { alive = false; };
-  }, []);
+  }, [paywall]);
+
+  if (paywall) {
+    const reason = (state && state.mode === 'savage' && (!window.JPB || !JPB.subscribed())) ? 'savage' : 'limit';
+    return <Paywall reason={reason} mascot={mascot} chaos={chaos} off={off}
+      onClose={() => go('upload')}
+      onUnlocked={() => { if (setState) setState(s => ({ ...s, mode: 'default' })); startedRef.current = false; setSettled(false); setDone(0); setPaywall(false); }} />;
+  }
+
   const finished = done >= BUILD_STEPS.length && settled;
   const pct = Math.round((done / BUILD_STEPS.length) * 100);
   return (
@@ -455,7 +481,7 @@ function VerdictScreen({ go, state, chaos, off, mascot, drama }) {
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 5, padding: '14px 18px 30px',
         background: 'linear-gradient(180deg, rgba(255,241,248,0), rgba(255,241,248,0.95) 40%)' }}>
         <div style={{ display: 'flex', gap: 10 }}>
-          <PawButton full onClick={() => { shareVerdictCard(c); state.onShare && state.onShare(); }}>Share Verdict 🚀</PawButton>
+          <PawButton full onClick={() => { shareVerdictCard(c); if (window.JPB) JPB.earnBonus(); state.onShare && state.onShare(); }}>Share Verdict 🚀</PawButton>
           <PawButton secondary small onClick={() => go('home')} style={{ flexShrink: 0, paddingLeft: 18, paddingRight: 18 }}>New Trial</PawButton>
         </div>
       </div>

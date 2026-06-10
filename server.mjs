@@ -1,20 +1,29 @@
 // Judge Paws — full-stack server.
 //   /                landing page (web/)
 //   /app/*           interactive court demo
-//   POST /api/trials AI verdict (Claude Opus 4.8, structured output)
-//   POST /api/waitlist  capture early-access emails
-// The ANTHROPIC_API_KEY stays server-side.
+//   POST /api/trials       AI verdict (Claude Opus 4.8, vision). Premium modes gated.
+//   POST /api/waitlist     capture early-access emails (beehiiv or local)
+//   POST /api/checkout     create a Stripe subscription checkout session
+//   POST /api/stripe-webhook   Stripe events -> grant/revoke Judge Paws+
+//   GET  /api/entitlement?email=  is this email subscribed?
+// Secrets (ANTHROPIC_API_KEY, STRIPE_*) stay server-side.
 
 import { createServer } from "node:http";
 import { readFile, mkdir, readFile as rf, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { extname, join, normalize, dirname } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
+import Stripe from "stripe";
 
 const PORT = process.env.PORT || 4319;
 const ROOT = new URL(".", import.meta.url).pathname;
 const WAITLIST = join(ROOT, "data", "waitlist.json");
-const client = new Anthropic(); // reads ANTHROPIC_API_KEY from the environment
+const ENTITLEMENTS = join(ROOT, "data", "entitlements.json");
+
+const client = new Anthropic(); // ANTHROPIC_API_KEY from env
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const PRICE_MONTHLY = process.env.STRIPE_PRICE_MONTHLY || "";
+const PRICE_YEARLY = process.env.STRIPE_PRICE_YEARLY || "";
 
 // ---- Trial engine ----------------------------------------------------------
 
@@ -41,6 +50,10 @@ evidence is provided, invent a vivid, relatable case. Rules:
 If the evidence describes anything genuinely unsafe (abuse, threats, self-harm), drop the
 comedy: keep it kind, and route them toward someone they trust.`;
 
+const SAVAGE = `\n\nSAVAGE MODE (premium): turn up the heat. Be sharper, funnier, more
+ruthless in the roast — still never cruel about protected traits or genuinely harmful, but
+hold nothing back on the pettiness. The caption should be extra screenshot-worthy.`;
+
 const PARTY = {
   type: "object", additionalProperties: false,
   properties: {
@@ -63,7 +76,7 @@ const CASE_SCHEMA = {
     "ruling", "rulingOf", "judgeNote", "caption"],
 };
 
-async function renderTrial({ relationshipType, evidence }) {
+async function renderTrial({ relationshipType, evidence, mode }) {
   const items = Array.isArray(evidence) ? evidence : [];
   const content = [{
     type: "text",
@@ -88,7 +101,7 @@ async function renderTrial({ relationshipType, evidence }) {
   const response = await client.messages.create({
     model: "claude-opus-4-8",
     max_tokens: 1500,
-    system: SYSTEM,
+    system: mode === "savage" ? SYSTEM + SAVAGE : SYSTEM,
     messages: [{ role: "user", content }],
     output_config: { format: { type: "json_schema", schema: CASE_SCHEMA } },
   });
@@ -97,38 +110,49 @@ async function renderTrial({ relationshipType, evidence }) {
   return JSON.parse(textBlock.text);
 }
 
-// ---- Waitlist --------------------------------------------------------------
+// ---- Waitlist (beehiiv or local) -------------------------------------------
 
 async function addToWaitlist(email) {
-  const apiKey = process.env.BEEHIIV_API_KEY;
-  const pubId = process.env.BEEHIIV_PUBLICATION_ID;
-  // Preferred: push straight into beehiiv so emails land in the real newsletter.
+  const apiKey = process.env.BEEHIIV_API_KEY, pubId = process.env.BEEHIIV_PUBLICATION_ID;
   if (apiKey && pubId) {
     const r = await fetch(`https://api.beehiiv.com/v2/publications/${pubId}/subscriptions`, {
       method: "POST",
       headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        email,
-        reactivate_existing: true,
-        send_welcome_email: true,
-        utm_source: "judge-paws",
-        utm_medium: "waitlist",
-      }),
+      body: JSON.stringify({ email, reactivate_existing: true, send_welcome_email: true, utm_source: "judge-paws", utm_medium: "waitlist" }),
     });
     if (!r.ok) throw new Error(`beehiiv ${r.status}`);
-    return { store: "beehiiv" };
+    return;
   }
-  // Fallback (local dev): append to data/waitlist.json.
   await mkdir(dirname(WAITLIST), { recursive: true });
   let list = [];
-  if (existsSync(WAITLIST)) {
-    try { list = JSON.parse(await rf(WAITLIST, "utf8")); } catch {}
-  }
+  if (existsSync(WAITLIST)) { try { list = JSON.parse(await rf(WAITLIST, "utf8")); } catch {} }
   if (!list.some((e) => e.email === email)) {
     list.push({ email, at: new Date().toISOString() });
     await writeFile(WAITLIST, JSON.stringify(list, null, 2));
   }
-  return { store: "local", count: list.length };
+}
+
+// ---- Entitlements (who has Judge Paws+) ------------------------------------
+
+async function readEntitlements() {
+  if (!existsSync(ENTITLEMENTS)) return {};
+  try { return JSON.parse(await rf(ENTITLEMENTS, "utf8")); } catch { return {}; }
+}
+async function writeEntitlements(map) {
+  await mkdir(dirname(ENTITLEMENTS), { recursive: true });
+  await writeFile(ENTITLEMENTS, JSON.stringify(map, null, 2));
+}
+async function isSubscribed(email) {
+  if (!email) return false;
+  const map = await readEntitlements();
+  const e = map[email.toLowerCase()];
+  return !!(e && e.subscribed);
+}
+async function setSubscribed(email, subscribed, extra = {}) {
+  if (!email) return;
+  const map = await readEntitlements();
+  map[email.toLowerCase()] = { ...(map[email.toLowerCase()] || {}), subscribed, updatedAt: new Date().toISOString(), ...extra };
+  await writeEntitlements(map);
 }
 
 // ---- HTTP plumbing ---------------------------------------------------------
@@ -140,7 +164,6 @@ const MIME = {
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg", ".ico": "image/x-icon",
 };
-
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
@@ -153,18 +176,48 @@ function sendJSON(res, status, obj) {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(obj));
 }
+function originOf(req) {
+  const proto = req.headers["x-forwarded-proto"] || "http";
+  return `${proto}://${req.headers.host}`;
+}
 
 const server = createServer(async (req, res) => {
-  // API: trial verdict
+  // --- Stripe webhook (needs raw body; check before other JSON routes) ---
+  if (req.method === "POST" && req.url === "/api/stripe-webhook") {
+    if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) return sendJSON(res, 400, { error: "Stripe not configured" });
+    const raw = await readBody(req);
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(raw, req.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (err) { return sendJSON(res, 400, { error: `Webhook signature failed: ${err.message}` }); }
+    try {
+      if (event.type === "checkout.session.completed") {
+        const s = event.data.object;
+        const email = s.customer_details?.email || s.customer_email;
+        await setSubscribed(email, true, { customerId: s.customer, subscriptionId: s.subscription });
+      } else if (event.type === "customer.subscription.deleted") {
+        const sub = event.data.object;
+        const map = await readEntitlements();
+        const email = Object.keys(map).find((k) => map[k].subscriptionId === sub.id);
+        if (email) await setSubscribed(email, false);
+      }
+    } catch (err) { console.error("webhook handler", err); }
+    return sendJSON(res, 200, { received: true });
+  }
+
+  // --- AI verdict (premium modes gated) ---
   if (req.method === "POST" && req.url === "/api/trials") {
     try {
-      const { relationshipType, evidence } = JSON.parse((await readBody(req)) || "{}");
+      const { relationshipType, evidence, mode, email } = JSON.parse((await readBody(req)) || "{}");
       if (!process.env.ANTHROPIC_API_KEY) return sendJSON(res, 500, { error: "Server is missing ANTHROPIC_API_KEY (see .env.example)." });
-      return sendJSON(res, 200, await renderTrial({ relationshipType, evidence }));
+      if (mode && mode !== "default") {
+        if (!(await isSubscribed(email))) return sendJSON(res, 402, { error: "Judge Paws+ required for premium modes.", upgrade: true });
+      }
+      return sendJSON(res, 200, await renderTrial({ relationshipType, evidence, mode }));
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Judge Paws could not reach a verdict. Try again." }); }
   }
 
-  // API: waitlist
+  // --- Waitlist ---
   if (req.method === "POST" && req.url === "/api/waitlist") {
     try {
       const { email } = JSON.parse((await readBody(req)) || "{}");
@@ -174,10 +227,37 @@ const server = createServer(async (req, res) => {
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Could not save your email. Try again." }); }
   }
 
-  // Static — landing at /, app under /app, web assets at root
+  // --- Create Stripe subscription checkout ---
+  if (req.method === "POST" && req.url === "/api/checkout") {
+    try {
+      const { email, plan } = JSON.parse((await readBody(req)) || "{}");
+      if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return sendJSON(res, 400, { error: "Enter a valid email to subscribe." });
+      if (!stripe) return sendJSON(res, 500, { error: "Payments aren't configured yet." });
+      const price = plan === "yearly" ? PRICE_YEARLY : PRICE_MONTHLY;
+      if (!price) return sendJSON(res, 500, { error: "Missing Stripe price id (set STRIPE_PRICE_MONTHLY)." });
+      const base = originOf(req);
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price, quantity: 1 }],
+        customer_email: email,
+        allow_promotion_codes: true,
+        success_url: `${base}/app/Judge%20Paws.html?paid=1&email=${encodeURIComponent(email)}`,
+        cancel_url: `${base}/app/Judge%20Paws.html?canceled=1`,
+      });
+      return sendJSON(res, 200, { url: session.url });
+    } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Could not start checkout. Try again." }); }
+  }
+
+  // --- Check subscription status ---
+  if (req.method === "GET" && req.url.startsWith("/api/entitlement")) {
+    const email = new URL(req.url, "http://x").searchParams.get("email");
+    return sendJSON(res, 200, { subscribed: await isSubscribed(email) });
+  }
+
+  // --- Static ---
   let path = decodeURIComponent((req.url || "/").split("?")[0]);
   if (path === "/" || path === "") path = "/web/index.html";
-  else if (!path.startsWith("/app/") && !path.startsWith("/web/")) path = "/web" + path; // serve web/ assets from root
+  else if (!path.startsWith("/app/") && !path.startsWith("/web/")) path = "/web" + path;
   const safe = normalize(path).replace(/^(\.\.[/\\])+/, "");
   try {
     const data = await readFile(join(ROOT, safe));
@@ -192,5 +272,6 @@ server.listen(PORT, () => {
   console.log(`🐾 Judge Paws running at http://localhost:${PORT}`);
   console.log(`   Landing: http://localhost:${PORT}/`);
   console.log(`   App:     http://localhost:${PORT}/app/Judge%20Paws.html`);
-  if (!process.env.ANTHROPIC_API_KEY) console.log("⚠️  Set ANTHROPIC_API_KEY to enable real verdicts (see .env.example).");
+  if (!process.env.ANTHROPIC_API_KEY) console.log("⚠️  Set ANTHROPIC_API_KEY to enable verdicts.");
+  if (!stripe) console.log("ℹ️  Stripe not configured — paywall shows but checkout is disabled (set STRIPE_SECRET_KEY).");
 });

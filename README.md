@@ -62,6 +62,25 @@ screenshots + relationship  ─►  /api/trials  ─►  Claude Opus 4.8 (vision
 **Shareable verdict.** The verdict screen's *Share* button renders a downloadable card
 (canvas) and uses the Web Share API where available — the viral loop is built in.
 
+## Pricing & monetization
+
+<p align="center">
+  <img src="docs/paywall.png" width="200" alt="Judge Paws+ paywall">
+</p>
+
+Designed for virality first, revenue second — **the free tier is the marketing.**
+
+| Tier | What you get |
+|------|--------------|
+| 🆓 **Free** | 1 verdict/day · sharing always free · **share to earn +1 verdict** |
+| ⭐ **Judge Paws+ — $2.99/mo** | Unlimited verdicts · **Savage mode** · appeals |
+
+- The shareable (watermarked) verdict card is the growth loop — never paywalled.
+- The **daily free limit** is soft (client-side) to keep friction near zero.
+- **Premium modes are enforced server-side** (`/api/trials` checks the subscriber
+  email), so paid value can't be faked.
+- Payments run on **Stripe Checkout** — web only, no App Store, no Apple cut.
+
 ## Run it
 
 ```bash
@@ -78,6 +97,19 @@ real, AI-rendered trial. The API key stays server-side and never ships to the br
 Set `BEEHIIV_API_KEY` and `BEEHIIV_PUBLICATION_ID` in `.env` and waitlist signups land
 directly in your beehiiv publication (with a welcome email). Leave them blank for local
 dev and emails append to `data/waitlist.json`.
+
+### Payments → Stripe (test mode works without account verification)
+
+1. Create a **recurring** product/price (`$2.99/mo`) in the Stripe dashboard → copy the
+   `price_…` id into `STRIPE_PRICE_MONTHLY`.
+2. Put your `sk_test_…` secret key in `STRIPE_SECRET_KEY`.
+3. For local webhooks: `stripe listen --forward-to localhost:4319/api/stripe-webhook`
+   and paste the `whsec_…` into `STRIPE_WEBHOOK_SECRET`.
+
+Flow: paywall → `POST /api/checkout` (Stripe Checkout) → on payment the webhook marks the
+email subscribed in `data/entitlements.json` → premium modes unlock. Swap to `sk_live_…`
+keys to go live. (On serverless, replace the JSON store with a DB — it's the only file
+that needs to persist.)
 
 ## Deploy
 
