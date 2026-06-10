@@ -1,0 +1,22 @@
+# Render Blueprint — deploy Judge Paws with one click.
+# render.com → New + → Blueprint → pick this repo → fill the secret values → Apply.
+services:
+  - type: web
+    name: judge-paws
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # paste your sk-ant-... (for real verdicts)
+      - key: STRIPE_SECRET_KEY
+        sync: false          # sk_test_... (or sk_live_... to go live)
+      - key: STRIPE_PRICE_MONTHLY
+        sync: false          # price_... ($2.99/mo)
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false          # whsec_... from the dashboard webhook endpoint
+      - key: BEEHIIV_API_KEY
+        sync: false          # optional
+      - key: BEEHIIV_PUBLICATION_ID
+        sync: false          # optional
