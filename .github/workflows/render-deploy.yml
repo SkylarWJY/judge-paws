@@ -1,0 +1,19 @@
+name: Trigger Render deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render deploy hook
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK secret not set — skipping (Render's own autoDeploy may still run)."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" >/dev/null
+          echo "✅ Render deploy triggered"

@@ -5,6 +5,7 @@ services:
     name: judge-paws
     runtime: node
     plan: free
+    autoDeploy: true       # deploy automatically on every push to main
     buildCommand: npm install
     startCommand: npm start
     envVars:
