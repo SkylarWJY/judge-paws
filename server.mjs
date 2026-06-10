@@ -269,10 +269,15 @@ const server = createServer(async (req, res) => {
     return sendJSON(res, 200, { subscribed: await isSubscribed(email) });
   }
 
+  // --- Home → the designed marketing landing ---
+  if (req.url === "/" || req.url === "") {
+    res.writeHead(302, { location: "/app/Judge%20Paws%20Landing.html" });
+    return res.end();
+  }
+
   // --- Static ---
   let path = decodeURIComponent((req.url || "/").split("?")[0]);
-  if (path === "/" || path === "") path = "/web/index.html";
-  else if (!path.startsWith("/app/") && !path.startsWith("/web/")) path = "/web" + path;
+  if (!path.startsWith("/app/") && !path.startsWith("/web/")) path = "/web" + path;
   const safe = normalize(path).replace(/^(\.\.[/\\])+/, "");
   try {
     const data = await readFile(join(ROOT, safe));
