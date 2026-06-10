@@ -117,6 +117,71 @@ OUTPUT LANGUAGE: ${zh ? "Chinese (中文) — EVERY string field in the verdict 
   return JSON.parse(textBlock.text);
 }
 
+// ---- Gemini trial engine (free tier — Flash-Lite, ~$0.0005/verdict) --------
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
+
+// Gemini-flavored response schema (uppercase Type enums, no additionalProperties)
+const G_PARTY = {
+  type: "OBJECT",
+  properties: {
+    name: { type: "STRING" }, emoji: { type: "STRING" }, role: { type: "STRING" },
+    score: { type: "INTEGER" }, quote: { type: "STRING" },
+  },
+  required: ["name", "emoji", "role", "score", "quote"],
+};
+const G_CASE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    plaintiff: G_PARTY, defendant: G_PARTY,
+    drama: { type: "INTEGER" }, blame: { type: "INTEGER" },
+    redFlags: { type: "ARRAY", items: { type: "STRING" } },
+    greenFlags: { type: "ARRAY", items: { type: "STRING" } },
+    ruling: { type: "STRING" }, rulingOf: { type: "STRING" },
+    judgeNote: { type: "STRING" }, caption: { type: "STRING" },
+  },
+  required: ["plaintiff", "defendant", "drama", "blame", "redFlags", "greenFlags",
+    "ruling", "rulingOf", "judgeNote", "caption"],
+};
+
+async function renderTrialGemini({ relationshipType, evidence, lang, story, you, them }) {
+  const items = Array.isArray(evidence) ? evidence : [];
+  const zh = lang === "zh";
+  const parts = [{
+    text: `New case filed.
+
+Relationship type: ${relationshipType || "couple"}
+Plaintiff (the one telling the story): ${(you || "").trim() || "(unnamed — pick a fun name)"}
+Defendant (the other party): ${(them || "").trim() || "(unnamed — pick a fun name)"}
+OUTPUT LANGUAGE: ${zh ? "Chinese (中文) — EVERY string field must be natural, funny, internet-native Chinese." : "English"}
+`,
+  }];
+  if (story && story.trim()) parts.push({ text: `The plaintiff's account (verbatim):\n"""${story.trim().slice(0, 4000)}"""` });
+  if (!items.length && !(story && story.trim())) parts.push({ text: "(no evidence — invent a juicy, relatable case)" });
+  for (const e of items) {
+    if (e && e.kind === "image" && e.data) {
+      parts.push({ text: `— ${e.label || "Screenshot"} (read this screenshot):` });
+      parts.push({ inline_data: { mime_type: e.mediaType || "image/jpeg", data: e.data } });
+    } else if (e && e.text) parts.push({ text: `— ${e.label || "Note"}: ${e.text}` });
+  }
+  parts.push({ text: "Hold court and return the full verdict, grounded in the story and evidence. Use the provided party names verbatim in name fields and rulingOf." });
+
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+    method: "POST",
+    headers: { "x-goog-api-key": process.env.GEMINI_API_KEY, "content-type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM }] },
+      contents: [{ role: "user", parts }],
+      generationConfig: { responseMimeType: "application/json", responseSchema: G_CASE_SCHEMA, maxOutputTokens: 1500 },
+    }),
+  });
+  if (!r.ok) throw new Error(`gemini ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  const d = await r.json();
+  const text = d?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("");
+  if (!text) throw new Error("gemini: empty response");
+  return JSON.parse(text);
+}
+
 // ---- Waitlist (beehiiv or local) -------------------------------------------
 
 async function addToWaitlist(email) {
@@ -231,11 +296,23 @@ const server = createServer(async (req, res) => {
   if (req.method === "POST" && req.url === "/api/trials") {
     try {
       const { relationshipType, evidence, mode, email, lang, story, you, them } = JSON.parse((await readBody(req)) || "{}");
-      if (!process.env.ANTHROPIC_API_KEY) return sendJSON(res, 500, { error: "Server is missing ANTHROPIC_API_KEY (see .env.example)." });
       if (mode && mode !== "default") {
         if (!(await isSubscribed(email))) return sendJSON(res, 402, { error: "Judge Paws+ required for premium modes.", upgrade: true });
       }
-      return sendJSON(res, 200, await renderTrial({ relationshipType, evidence, mode, lang, story, you, them }));
+      // Tiered model routing:
+      //   subscribers + premium modes → Claude Opus (best quality, worth the cost)
+      //   free tier → Gemini Flash-Lite (~$0.0005/verdict) when configured
+      const premium = (mode && mode !== "default") || (await isSubscribed(email));
+      const hasClaude = !!process.env.ANTHROPIC_API_KEY;
+      const hasGemini = !!process.env.GEMINI_API_KEY;
+      const args = { relationshipType, evidence, mode, lang, story, you, them };
+      if (premium && hasClaude) return sendJSON(res, 200, await renderTrial(args));
+      if (hasGemini) {
+        try { return sendJSON(res, 200, await renderTrialGemini(args)); }
+        catch (err) { console.error("gemini failed, falling back:", err.message); if (!hasClaude) throw err; }
+      }
+      if (hasClaude) return sendJSON(res, 200, await renderTrial(args));
+      return sendJSON(res, 500, { error: "Server has no model key configured (set GEMINI_API_KEY or ANTHROPIC_API_KEY)." });
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Judge Paws could not reach a verdict. Try again." }); }
   }
 
