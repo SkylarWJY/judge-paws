@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Judge Paws — The First AI Relationship Court</title>
+<meta name="ext-resource-dependency" content="assets/judge-paws.jpg" data-resource-id="judgePhoto" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 120% at 50% 0%, #FFE8F4 0%, #F3E9FF 50%, #FFE6DC 100%);
+    font-family: 'Nunito', sans-serif;
+    padding: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  #root { display: flex; align-items: center; justify-content: center; }
+
+  /* ── animations ── */
+  @keyframes jp-blob-float {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(24px,-30px) scale(1.08); }
+    66% { transform: translate(-18px,18px) scale(0.95); }
+  }
+  .jp-blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(48px); opacity: 0.5;
+    animation: jp-blob-float 18s ease-in-out infinite;
+  }
+  @keyframes jp-bob {
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50% { transform: translateY(-9px) rotate(1.5deg); }
+  }
+  .jp-bob { animation: jp-bob 3.4s ease-in-out infinite; }
+
+  @keyframes jp-rise {
+    0% { transform: translate(0,0) scale(0.6); opacity: 0; }
+    12% { opacity: 0.9; }
+    88% { opacity: 0.9; }
+    100% { transform: translate(var(--drift), -780px) scale(1.05); opacity: 0; }
+  }
+  @keyframes jp-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    60% { transform: scale(1.08); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .jp-pop { animation: jp-pop 0.42s cubic-bezier(.34,1.56,.64,1) both; }
+
+  @keyframes jp-floatin {
+    0% { transform: translateY(22px) scale(0.8); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .jp-floatin { animation: jp-floatin 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+
+  @keyframes jp-spin { to { transform: rotate(360deg); } }
+  .jp-spin { animation: jp-spin 1s linear infinite; }
+
+  @keyframes jp-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .jp-pulse { animation: jp-pulse 1.3s ease-in-out infinite; }
+
+  @keyframes jp-stamp {
+    0% { transform: rotate(-3deg) scale(2.4); opacity: 0; }
+    60% { transform: rotate(-3deg) scale(0.92); opacity: 1; }
+    100% { transform: rotate(-3deg) scale(1); opacity: 1; }
+  }
+  .jp-stamp { animation: jp-stamp 0.55s cubic-bezier(.34,1.56,.64,1) both; }
+
+  /* screen transition (transform-only so captures/exports never catch a blank frame) */
+  @keyframes jp-screen-in {
+    0% { transform: translateX(26px); }
+    100% { transform: translateX(0); }
+  }
+  .jp-screen { position: absolute; inset: 0; animation: jp-screen-in 0.4s cubic-bezier(.22,1,.36,1) both; }
+
+  .jp-tap { transition: transform 0.16s cubic-bezier(.34,1.56,.64,1); }
+  .jp-tap:active { transform: scale(0.93); }
+
+  /* toast */
+  @keyframes jp-toast { 0% { transform: translateX(-50%) translateY(30px); opacity: 0; } 100% { transform: translateX(-50%); opacity: 1; } }
+
+  *::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="jp-theme.jsx"></script>
+  <script type="text/babel" src="jp-viz.jsx"></script>
+  <script type="text/babel" src="jp-screens-1.jsx"></script>
+  <script type="text/babel" src="jp-screens-2.jsx"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+    const DEVICE_H = 874;
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "particles": "wild",
+      "mascot": "photo",
+      "motion": "lively",
+      "drama": 82
+    }/*EDITMODE-END*/;
+
+    const JUDGE_PHOTO = (window.__resources && window.__resources.judgePhoto) || 'assets/judge-paws.jpg';
+    const resolveMascot = (v) => v === 'photo' ? JUDGE_PHOTO : v;
+
+    function ShareToast({ show }) {
+      if (!show) return null;
+      return (
+        <div style={{
+          position: 'absolute', bottom: 96, left: '50%', transform: 'translateX(-50%)', zIndex: 80,
+          background: 'rgba(90,45,73,0.92)', color: '#fff', padding: '12px 20px', borderRadius: 999,
+          fontFamily: 'Fredoka, sans-serif', fontWeight: 500, fontSize: 14, whiteSpace: 'nowrap',
+          boxShadow: '0 12px 30px rgba(90,45,73,0.4)', animation: 'jp-pop 0.4s cubic-bezier(.34,1.56,.64,1) both',
+        }}>📸 Verdict copied — go ruin a group chat 🐾</div>
+      );
+    }
+
+    function App() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const [screen, setScreen] = useState('home');
+      const [state, setState] = useState({ relType: null, evidence: [], caseData: buildCase('couple') });
+      const [toast, setToast] = useState(false);
+
+      const particlesOff = t.particles === 'off';
+      const chaos = t.particles === 'wild';
+      const calm = t.motion === 'calm';
+
+      const go = useCallback((next) => {
+        setState(s => {
+          if (next === 'build') return { ...s, caseData: buildCase(s.relType || 'couple') };
+          if (next === 'home') return { relType: null, evidence: [], caseData: buildCase('couple') };
+          return s;
+        });
+        setScreen(next);
+      }, []);
+
+      const onShare = useCallback(() => {
+        setToast(true);
+        setTimeout(() => setToast(false), 2600);
+      }, []);
+
+      const shared = { go, state: { ...state, onShare }, setState, chaos,
+        off: particlesOff, mascot: resolveMascot(t.mascot), drama: t.drama };
+      const screens = {
+        home:    <HomeScreen {...shared} />,
+        type:    <TypeScreen {...shared} />,
+        upload:  <UploadScreen {...shared} />,
+        build:   <BuildScreen {...shared} />,
+        court:   <CourtScreen {...shared} />,
+        verdict: <VerdictScreen {...shared} />,
+      };
+
+      return (
+        <React.Fragment>
+          {calm && <style>{`.jp-blob{animation-duration:46s!important;opacity:0.35!important;} .jp-bob{animation-duration:6s!important;} .jp-screen{animation:none!important;}`}</style>}
+          <IOSDevice height={DEVICE_H}>
+            <div style={{ position: 'relative', width: '100%', height: DEVICE_H }}>
+              <div key={screen} className="jp-screen" style={{ height: DEVICE_H }}>{screens[screen]}</div>
+              <ShareToast show={toast} />
+            </div>
+          </IOSDevice>
+          <TweaksPanel title="Tweaks">
+            <TweakSection label="Vibe" />
+            <TweakRadio label="Particles" value={t.particles}
+              options={['off', 'tasteful', 'wild']}
+              onChange={(v) => setTweak('particles', v)} />
+            <TweakRadio label="Motion" value={t.motion}
+              options={['lively', 'calm']}
+              onChange={(v) => setTweak('motion', v)} />
+            <TweakSection label="Cast" />
+            <TweakSelect label="Judge" value={t.mascot}
+              options={[
+                { value: 'photo', label: '\uD83D\uDC36 Judge Paws (photo)' },
+                { value: '\uD83D\uDC36', label: '\uD83D\uDC36 Corgi emoji' },
+                { value: '\uD83D\uDC15', label: '\uD83D\uDC15 Good boy' },
+                { value: '\uD83D\uDC31', label: '\uD83D\uDC31 Judge Cat' },
+                { value: '\uD83E\uDD8A', label: '\uD83E\uDD8A Sly fox' },
+                { value: '\uD83D\uDC3B', label: '\uD83D\uDC3B Big bear' },
+              ]}
+              onChange={(v) => setTweak('mascot', v)} />
+            <TweakSection label="Verdict" />
+            <TweakSlider label="Drama level" value={t.drama} min={0} max={100} unit=""
+              onChange={(v) => setTweak('drama', v)} />
+          </TweaksPanel>
+        </React.Fragment>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+
+  <template id="__bundler_thumbnail">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="#FFE4F2"/>
+      <text x="50" y="62" font-size="48" text-anchor="middle">🐶</text>
+    </svg>
+  </template>
+</body>
+</html>

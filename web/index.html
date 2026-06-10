@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judge Paws — The First AI Relationship Court 🐾⚖️</title>
+<meta name="description" content="Bring your relationship dispute. Judge Paws hears both sides — and a jury of AI dogs decides. Join the waitlist.">
+<style>
+  :root{ --ink:#3a1f33; --muted:#9a7088; --pink:#ff4d9d; --bubble:#ff77b7;
+    --pink-soft:#ffe0ef; --gold:#e8a83b; --card:#fff; --line:#fbdcec; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{ color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+    background:radial-gradient(120% 80% at 50% -10%, #fff5fa 0%, #ffe7f3 45%, #ffd0e8 100%);
+    min-height:100vh; line-height:1.5; }
+  .wrap{ max-width:680px; margin:0 auto; padding:0 22px }
+  /* nav */
+  nav{ display:flex; align-items:center; justify-content:space-between; padding:22px 0 }
+  .brand{ font-weight:800; font-size:20px; letter-spacing:-.01em }
+  .nav-cta{ font-weight:700; font-size:14px; color:var(--pink); text-decoration:none }
+  /* hero */
+  .hero{ text-align:center; padding:30px 0 10px }
+  .mascot{ width:128px; height:128px; border-radius:50%; object-fit:cover;
+    box-shadow:0 16px 40px rgba(255,77,157,.35); border:5px solid #fff; }
+  .badge{ display:inline-block; margin:18px 0 14px; background:var(--pink-soft); color:#b32a73;
+    font-weight:800; font-size:13px; letter-spacing:.04em; padding:7px 16px; border-radius:999px }
+  h1{ font-size:54px; line-height:1.02; letter-spacing:-.03em; font-weight:850 }
+  h1 .em{ color:var(--pink) }
+  .sub{ font-size:19px; color:var(--muted); margin:18px auto 0; max-width:460px }
+  /* waitlist */
+  .waitlist{ margin:30px auto 8px; max-width:440px }
+  .row{ display:flex; gap:10px }
+  input[type=email]{ flex:1; border:1.5px solid var(--line); border-radius:14px; padding:15px 16px;
+    font:inherit; font-size:16px; background:#fffafd }
+  input:focus{ outline:none; border-color:var(--pink) }
+  button{ border:none; border-radius:14px; cursor:pointer; background:var(--pink); color:#fff;
+    font-weight:800; font-size:16px; padding:15px 22px; box-shadow:0 8px 20px rgba(255,77,157,.4);
+    white-space:nowrap }
+  button:disabled{ opacity:.6; cursor:wait }
+  .note{ font-size:13px; color:var(--muted); margin-top:10px; text-align:center; min-height:18px }
+  .note.ok{ color:#1f9d63; font-weight:700 }
+  .note.err{ color:#b32a73; font-weight:700 }
+  /* how */
+  .how{ margin:46px 0 10px }
+  .how h2{ text-align:center; font-size:14px; letter-spacing:.14em; text-transform:uppercase; color:var(--pink); font-weight:800 }
+  .steps{ display:flex; gap:14px; margin-top:22px }
+  .step{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:22px 16px;
+    text-align:center; box-shadow:0 8px 24px rgba(180,80,140,.08) }
+  .step .ico{ font-size:34px }
+  .step .t{ font-weight:800; font-size:16px; margin:10px 0 4px }
+  .step .d{ font-size:14px; color:var(--muted) }
+  /* tease */
+  .tease{ margin:42px auto; text-align:center; background:var(--ink); color:#fff; border-radius:22px;
+    padding:30px 26px; max-width:520px }
+  .tease .q{ font-size:21px; font-weight:700; line-height:1.4 }
+  .tease .a{ margin-top:10px; color:#ffd27a; font-weight:800; font-size:15px }
+  footer{ text-align:center; color:var(--muted); font-size:13px; padding:30px 0 40px }
+  footer a{ color:var(--pink); text-decoration:none; font-weight:700 }
+  @media(max-width:560px){ h1{font-size:42px} .steps{flex-direction:column} .row{flex-direction:column} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="brand">⚖️🐾 Judge Paws</div>
+    <a class="nav-cta" href="#waitlist">Join waitlist</a>
+  </nav>
+
+  <section class="hero">
+    <img class="mascot" src="judge-paws.jpg" alt="Judge Paws mascot">
+    <div class="badge">THE FIRST AI RELATIONSHIP COURT</div>
+    <h1>Justice has <span class="em">four paws.</span></h1>
+    <p class="sub">Bring your dispute. Judge Paws hears both sides, a jury of AI dogs deliberates,
+      and the verdict is ready to post. Fair, funny, and a little bit savage. 🔨</p>
+
+    <form class="waitlist" id="waitlist" onsubmit="return false;">
+      <div class="row" id="waitlist">
+        <input type="email" id="email" placeholder="you@email.com" autocomplete="email" required>
+        <button id="join">Get early access 🐾</button>
+      </div>
+      <div class="note" id="note">Be first in line when the court opens.</div>
+    </form>
+  </section>
+
+  <section class="how">
+    <h2>How the court works</h2>
+    <div class="steps">
+      <div class="step"><div class="ico">🗂️</div><div class="t">Submit evidence</div><div class="d">Drop the screenshots. Tell your side.</div></div>
+      <div class="step"><div class="ico">🐕</div><div class="t">The dog jury votes</div><div class="d">Five very opinionated AI dogs deliberate.</div></div>
+      <div class="step"><div class="ico">🔨</div><div class="t">Verdict drops</div><div class="d">A ruling, the receipts, a shareable caption.</div></div>
+    </div>
+  </section>
+
+  <section class="tease">
+    <div class="q">“My boyfriend got convicted by 4 AI dogs for sending ‘k’ 😭🔨”</div>
+    <div class="a">— a real Judge Paws verdict</div>
+  </section>
+
+  <footer>
+    Built by <a href="https://github.com/SkylarWJY">Skylar</a> ·
+    <a href="https://github.com/SkylarWJY/judge-paws">source</a> · 🐾 judgepaws.app
+  </footer>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const join = $("join"), note = $("note");
+  join.onclick = async () => {
+    const email = $("email").value.trim();
+    note.className = "note";
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { note.textContent = "Enter a valid email 🐾"; note.classList.add("err"); return; }
+    join.disabled = true; const old = join.textContent; join.textContent = "Adding you…";
+    try {
+      const res = await fetch("/api/waitlist", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ email }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong.");
+      note.textContent = "You're on the list! The court will be in touch. ⚖️"; note.classList.add("ok");
+      $("email").value = "";
+    } catch (e) {
+      note.textContent = e.message; note.classList.add("err");
+    } finally { join.disabled = false; join.textContent = old; }
+  };
+</script>
+</body>
+</html>

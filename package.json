@@ -1,0 +1,16 @@
+{
+  "name": "judge-paw",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Judge Paw — an AI judge that delivers playful, fair verdicts for couples' disputes.",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.69.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
