@@ -144,9 +144,24 @@ async function writeEntitlements(map) {
 }
 async function isSubscribed(email) {
   if (!email) return false;
+  const key = email.toLowerCase();
+  // 1) fast path: local cache (written by the webhook)
   const map = await readEntitlements();
-  const e = map[email.toLowerCase()];
-  return !!(e && e.subscribed);
+  if (map[key] && map[key].subscribed) return true;
+  // 2) source of truth: ask Stripe directly (survives server restarts / fresh deploys)
+  if (stripe) {
+    try {
+      const customers = await stripe.customers.list({ email: key, limit: 1 });
+      if (customers.data.length) {
+        const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: "active", limit: 1 });
+        if (subs.data.length) {
+          await setSubscribed(key, true, { customerId: customers.data[0].id, subscriptionId: subs.data[0].id });
+          return true;
+        }
+      }
+    } catch (err) { console.error("stripe subscription check", err.message); }
+  }
+  return false;
 }
 async function setSubscribed(email, subscribed, extra = {}) {
   if (!email) return;
