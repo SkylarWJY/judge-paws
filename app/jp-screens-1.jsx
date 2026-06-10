@@ -174,7 +174,7 @@ function HomeScreen({ go, chaos, off, mascot, lang, petPhoto, onPetPhoto }) {
         {/* CTAs */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
           <PawButton full onClick={() => go('type')}>{tr.home.start}</PawButton>
-          <PawButton full secondary small onClick={() => go('type')}>{tr.home.watch}</PawButton>
+          <PawButton full secondary small onClick={() => go('viral')}>{tr.home.watch}</PawButton>
         </div>
       </div>
     </Backdrop>
