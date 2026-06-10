@@ -29,9 +29,11 @@ const DRAMA_LABELS = [
 function dramaTier(v) { return DRAMA_LABELS.find(d => v <= d.max) || DRAMA_LABELS[4]; }
 
 // semicircle gauge
-function DramaMeter({ value = 82, run = true }) {
+function DramaMeter({ value = 82, run = true, tierLabels }) {
   const n = useCountUp(value, 1300, run);
-  const tier = dramaTier(n);
+  const idx = DRAMA_LABELS.findIndex(d => n <= d.max);
+  const tier = DRAMA_LABELS[idx === -1 ? 4 : idx];
+  const tierName = (tierLabels && tierLabels[idx === -1 ? 4 : idx]) || tier.label;
   const R = 100, SW = 20, cx = 120, cy = 120;
   const circ = Math.PI * R; // semicircle length
   const frac = n / 100;
@@ -65,7 +67,7 @@ function DramaMeter({ value = 82, run = true }) {
         <div style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 44, color: JP.ink, lineHeight: 1 }}>{Math.round(n)}</div>
         <div style={{ display: 'inline-block', marginTop: 6, padding: '5px 14px', borderRadius: 999, whiteSpace: 'nowrap',
           background: tier.color, color: '#fff', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 14,
-          boxShadow: `0 6px 14px ${tier.color}66` }}>{tier.label}</div>
+          boxShadow: `0 6px 14px ${tier.color}66` }}>{tierName}</div>
       </div>
     </div>
   );
@@ -95,7 +97,7 @@ function ScoreRing({ value = 78, label, emoji, color = JP.bubblegum, run = true,
 }
 
 // who-started-it pie (conic)
-function BlamePie({ a = 67, b = 33, aLabel = 'Jordan', bLabel = 'Maya', run = true }) {
+function BlamePie({ a = 67, b = 33, aLabel = 'Jordan', bLabel = 'Maya', run = true, centerLabel = 'blame' }) {
   const n = useCountUp(a, 1200, run);
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
@@ -106,7 +108,7 @@ function BlamePie({ a = 67, b = 33, aLabel = 'Jordan', bLabel = 'Maya', run = tr
         <div style={{ position: 'absolute', inset: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.85)',
           backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ fontSize: 22 }}>⚖️</span>
-          <span style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 12, color: JP.inkSoft }}>blame</span>
+          <span style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 12, color: JP.inkSoft }}>{centerLabel}</span>
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

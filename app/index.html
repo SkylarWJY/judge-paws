@@ -66,6 +66,11 @@
   }
   .jp-pulse { animation: jp-pulse 1.3s ease-in-out infinite; }
 
+  @keyframes jp-ring {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+
   @keyframes jp-stamp {
     0% { transform: rotate(-3deg) scale(2.4); opacity: 0; }
     60% { transform: rotate(-3deg) scale(0.92); opacity: 1; }
@@ -99,9 +104,11 @@
   <script type="text/babel" src="ios-frame.jsx"></script>
   <script type="text/babel" src="tweaks-panel.jsx"></script>
   <script type="text/babel" src="jp-theme.jsx"></script>
+  <script type="text/babel" src="jp-i18n.jsx"></script>
   <script type="text/babel" src="jp-billing.jsx"></script>
   <script type="text/babel" src="jp-viz.jsx"></script>
   <script type="text/babel" src="jp-screens-1.jsx"></script>
+  <script type="text/babel" src="jp-screens-tell.jsx"></script>
   <script type="text/babel" src="jp-screens-2.jsx"></script>
 
   <script type="text/babel">
@@ -118,7 +125,41 @@
     const JUDGE_PHOTO = (window.__resources && window.__resources.judgePhoto) || 'assets/judge-paws.jpg';
     const resolveMascot = (v) => v === 'photo' ? JUDGE_PHOTO : v;
 
-    function ShareToast({ show }) {
+    const LANG_KEY = 'judgepaws_lang';
+    function getInitialLang() {
+      try {
+        var saved = localStorage.getItem(LANG_KEY);
+        if (saved === 'en' || saved === 'zh') return saved;
+      } catch (e) {}
+      return (navigator.language || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+    }
+
+    // EN / 中 segmented toggle, always on top
+    function LangToggle({ lang, onChange }) {
+      const seg = (code, label) => (
+        <button onClick={() => onChange(code)} className="jp-tap" style={{
+          border: 'none', cursor: 'pointer', padding: '5px 12px', borderRadius: 999,
+          fontFamily: 'Fredoka, sans-serif', fontWeight: 600, fontSize: 13.5,
+          background: lang === code ? 'linear-gradient(180deg,#FF87BE,#FF4D97)' : 'transparent',
+          color: lang === code ? '#fff' : '#9A7690',
+          boxShadow: lang === code ? '0 4px 10px rgba(255,77,151,0.4)' : 'none',
+          transition: 'all 0.2s ease',
+        }}>{label}</button>
+      );
+      return (
+        <div style={{
+          position: 'absolute', top: 56, right: 14, zIndex: 70, display: 'flex', gap: 2, padding: 3,
+          borderRadius: 999, background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.85)',
+          boxShadow: '0 6px 18px rgba(214,98,168,0.18)',
+        }}>
+          {seg('en', 'EN')}
+          {seg('zh', '中')}
+        </div>
+      );
+    }
+
+    function ShareToast({ show, text }) {
       if (!show) return null;
       return (
         <div style={{
@@ -126,28 +167,41 @@
           background: 'rgba(90,45,73,0.92)', color: '#fff', padding: '12px 20px', borderRadius: 999,
           fontFamily: 'Fredoka, sans-serif', fontWeight: 500, fontSize: 14, whiteSpace: 'nowrap',
           boxShadow: '0 12px 30px rgba(90,45,73,0.4)', animation: 'jp-pop 0.4s cubic-bezier(.34,1.56,.64,1) both',
-        }}>📸 Verdict copied — go ruin a group chat 🐾</div>
+        }}>{text}</div>
       );
     }
 
     function App() {
       const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const [lang, setLang] = useState(getInitialLang);
+      const [petPhoto, setPetPhoto] = useState(() => { try { return localStorage.getItem('judgepaws_pet') || ''; } catch (e) { return ''; } });
+      const setPet = useCallback((dataUrl) => {
+        setPetPhoto(dataUrl || '');
+        try { if (dataUrl) localStorage.setItem('judgepaws_pet', dataUrl); else localStorage.removeItem('judgepaws_pet'); } catch (e) {}
+      }, []);
       const [screen, setScreen] = useState('home');
-      const [state, setState] = useState({ relType: null, evidence: [], mode: 'default', caseData: buildCase('couple') });
+      const [state, setState] = useState(() => ({ relType: null, story: '', you: '', them: '', evidence: [], mode: 'default', caseData: buildCase('couple', getInitialLang()) }));
       const [toast, setToast] = useState(false);
 
       const particlesOff = t.particles === 'off';
       const chaos = t.particles === 'wild';
       const calm = t.motion === 'calm';
 
+      const changeLang = useCallback((next) => {
+        setLang(next);
+        try { localStorage.setItem(LANG_KEY, next); } catch (e) {}
+        // re-translate the active case content
+        setState(s => ({ ...s, caseData: buildCase(s.relType || 'couple', next, { you: s.you, them: s.them }) }));
+      }, []);
+
       const go = useCallback((next) => {
         setState(s => {
-          if (next === 'build') return { ...s, caseData: buildCase(s.relType || 'couple') };
-          if (next === 'home') return { relType: null, evidence: [], mode: 'default', caseData: buildCase('couple') };
+          if (next === 'build') return { ...s, caseData: buildCase(s.relType || 'couple', lang, { you: s.you, them: s.them }) };
+          if (next === 'home') return { relType: null, story: '', you: '', them: '', evidence: [], mode: 'default', caseData: buildCase('couple', lang) };
           return s;
         });
         setScreen(next);
-      }, []);
+      }, [lang]);
 
       const onShare = useCallback(() => {
         setToast(true);
@@ -155,10 +209,12 @@
       }, []);
 
       const shared = { go, state: { ...state, onShare }, setState, chaos,
-        off: particlesOff, mascot: resolveMascot(t.mascot), drama: t.drama };
+        off: particlesOff, mascot: petPhoto || resolveMascot(t.mascot), drama: t.drama, lang,
+        petPhoto, onPetPhoto: setPet };
       const screens = {
         home:    <HomeScreen {...shared} />,
         type:    <TypeScreen {...shared} />,
+        tell:    <TellScreen {...shared} />,
         upload:  <UploadScreen {...shared} />,
         build:   <BuildScreen {...shared} />,
         court:   <CourtScreen {...shared} />,
@@ -171,7 +227,8 @@
           <IOSDevice height={DEVICE_H}>
             <div style={{ position: 'relative', width: '100%', height: DEVICE_H }}>
               <div key={screen} className="jp-screen" style={{ height: DEVICE_H }}>{screens[screen]}</div>
-              <ShareToast show={toast} />
+              <LangToggle lang={lang} onChange={changeLang} />
+              <ShareToast show={toast} text={I18N[lang].toast} />
             </div>
           </IOSDevice>
           <TweaksPanel title="Tweaks">

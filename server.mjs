@@ -76,27 +76,34 @@ const CASE_SCHEMA = {
     "ruling", "rulingOf", "judgeNote", "caption"],
 };
 
-async function renderTrial({ relationshipType, evidence, mode }) {
+async function renderTrial({ relationshipType, evidence, mode, lang, story, you, them }) {
   const items = Array.isArray(evidence) ? evidence : [];
+  const zh = lang === "zh";
   const content = [{
     type: "text",
-    text: `New case filed.\n\nRelationship type: ${relationshipType || "couple"}\n\nEvidence on file:`,
+    text: `New case filed.
+
+Relationship type: ${relationshipType || "couple"}
+Plaintiff (the one telling the story): ${(you || "").trim() || "(unnamed — pick a fun name)"}
+Defendant (the other party): ${(them || "").trim() || "(unnamed — pick a fun name)"}
+OUTPUT LANGUAGE: ${zh ? "Chinese (中文) — EVERY string field in the verdict must be written in natural, funny, internet-native Chinese. The ruling should be a punchy ALL-CAPS-energy Chinese phrase." : "English"}
+`,
   }];
-  if (!items.length) {
+  if (story && story.trim()) {
+    content.push({ type: "text", text: `The plaintiff's own account of what happened (their side, verbatim):\n"""${story.trim().slice(0, 4000)}"""` });
+  }
+  if (!items.length && !(story && story.trim())) {
     content.push({ type: "text", text: "(no evidence submitted — invent a juicy, relatable case)" });
-  } else {
-    for (const e of items) {
-      if (e && e.kind === "image" && e.data) {
-        content.push({ type: "text", text: `— ${e.label || "Screenshot"} (read this screenshot):` });
-        content.push({ type: "image", source: { type: "base64", media_type: e.mediaType || "image/jpeg", data: e.data } });
-      } else if (e && e.text) {
-        content.push({ type: "text", text: `— ${e.label || "Note"}: ${e.text}` });
-      } else if (e) {
-        content.push({ type: "text", text: `— ${e.label || "Evidence"} submitted` });
-      }
+  }
+  for (const e of items) {
+    if (e && e.kind === "image" && e.data) {
+      content.push({ type: "text", text: `— ${e.label || "Screenshot"} (read this screenshot):` });
+      content.push({ type: "image", source: { type: "base64", media_type: e.mediaType || "image/jpeg", data: e.data } });
+    } else if (e && e.text) {
+      content.push({ type: "text", text: `— ${e.label || "Note"}: ${e.text}` });
     }
   }
-  content.push({ type: "text", text: "Hold court and return the full verdict, grounded in the evidence above." });
+  content.push({ type: "text", text: "Hold court and return the full verdict, grounded in the story and evidence above. Remember: the plaintiff told their side — be fair to the absent defendant too. Use the provided party names verbatim in name fields and rulingOf." });
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
@@ -223,12 +230,12 @@ const server = createServer(async (req, res) => {
   // --- AI verdict (premium modes gated) ---
   if (req.method === "POST" && req.url === "/api/trials") {
     try {
-      const { relationshipType, evidence, mode, email } = JSON.parse((await readBody(req)) || "{}");
+      const { relationshipType, evidence, mode, email, lang, story, you, them } = JSON.parse((await readBody(req)) || "{}");
       if (!process.env.ANTHROPIC_API_KEY) return sendJSON(res, 500, { error: "Server is missing ANTHROPIC_API_KEY (see .env.example)." });
       if (mode && mode !== "default") {
         if (!(await isSubscribed(email))) return sendJSON(res, 402, { error: "Judge Paws+ required for premium modes.", upgrade: true });
       }
-      return sendJSON(res, 200, await renderTrial({ relationshipType, evidence, mode }));
+      return sendJSON(res, 200, await renderTrial({ relationshipType, evidence, mode, lang, story, you, them }));
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Judge Paws could not reach a verdict. Try again." }); }
   }
 

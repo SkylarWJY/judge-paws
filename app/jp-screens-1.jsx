@@ -1,27 +1,18 @@
 /* Judge Paws — screens part 1: Home, Relationship Picker, Evidence Upload */
 
-// rotating quips for the mascot
-const QUIPS = [
-  "OBJECTION! That text is suspicious.",
-  "Respectfully, you both need therapy.",
-  "Sending 'k' was a criminal offense.",
-  "Bestie… that was not a smart reply.",
-  "Your honor has seen enough. 🐾",
-  "Paw-sitively guilty.",
-];
-
 function useRotating(list, ms = 2600) {
   const [i, setI] = React.useState(0);
+  React.useEffect(() => { setI(0); }, [list]);
   React.useEffect(() => {
     const t = setInterval(() => setI(v => (v + 1) % list.length), ms);
     return () => clearInterval(t);
   }, [list, ms]);
-  return list[i];
+  return list[i % list.length];
 }
 
 // striped placeholder for evidence imagery
 function EvidenceThumb({ label, w = 88, h = 110, hue = JP.pink }) {
-  const id = 'st' + label.replace(/\W/g, '');
+  const id = 'st' + String(label).replace(/\W/g, '');
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ borderRadius: 14, display: 'block' }}>
       <defs>
@@ -37,9 +28,101 @@ function EvidenceThumb({ label, w = 88, h = 110, hue = JP.pink }) {
   );
 }
 
+// little fake voice waveform
+function WaveBars({ n = 26, color = JP.bubblegum }) {
+  const bars = React.useMemo(() => Array.from({ length: n }, (_, i) => 4 + Math.abs(Math.sin(i * 1.7) + Math.cos(i * 0.6)) * 11), [n]);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: 24, flex: 1, overflow: 'hidden' }}>
+      {bars.map((h, i) => (
+        <div key={i} style={{ width: 2.5, height: h, borderRadius: 2, background: color, opacity: 0.3 + (h / 22) * 0.7, flexShrink: 0 }} />
+      ))}
+    </div>
+  );
+}
+
+// type-aware evidence card (chat snippet / voice note / photo / real upload)
+function EvidenceCard({ srcId, emoji, idx, lang, onRemove, img }) {
+  const tr = I18N[lang];
+  const type = srcId === 'voice' ? 'voice' : srcId === 'photo' ? 'photo' : 'chat';
+  const appName = tr.sources[srcId];
+  const eu = tr.evidenceUI;
+  let body = null;
+
+  if (img) {
+    // a real uploaded screenshot — show the actual image
+    body = (
+      <img src={img} alt={appName} style={{ display: 'block', width: '100%', maxHeight: 160,
+        objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(214,98,168,0.18)' }} />
+    );
+  } else if (type === 'chat') {
+    const s = tr.evidenceSamples.chat[idx % tr.evidenceSamples.chat.length];
+    body = (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div style={{ alignSelf: 'flex-start', maxWidth: '84%', background: '#F1ECF4', color: JP.ink,
+          padding: '7px 11px', borderRadius: '14px 14px 14px 4px', fontFamily: 'Nunito', fontWeight: 600, fontSize: 13, lineHeight: 1.3 }}>{s.them}</div>
+        <div style={{ alignSelf: 'flex-end', maxWidth: '84%', background: `linear-gradient(180deg, ${JP.pink}, ${JP.bubblegum})`, color: '#fff',
+          padding: '7px 11px', borderRadius: '14px 14px 4px 14px', fontFamily: 'Nunito', fontWeight: 700, fontSize: 13, lineHeight: 1.3 }}>{s.me}</div>
+      </div>
+    );
+  } else if (type === 'voice') {
+    const s = tr.evidenceSamples.voice[idx % tr.evidenceSamples.voice.length];
+    body = (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 999, flexShrink: 0,
+            background: `linear-gradient(160deg, ${JP.pink}, ${JP.bubblegum})`, color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
+            boxShadow: '0 4px 10px rgba(255,77,151,0.4)' }}>▶</div>
+          <WaveBars />
+        </div>
+        <div style={{ marginTop: 9, display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+          <span style={{ flexShrink: 0, fontFamily: 'Fredoka', fontWeight: 600, fontSize: 10, color: JP.bubblegum,
+            background: 'rgba(255,77,151,0.1)', padding: '3px 8px', borderRadius: 999, whiteSpace: 'nowrap' }}>{eu.transcript}</span>
+          <span style={{ fontFamily: 'Nunito', fontWeight: 600, fontSize: 12.5, color: JP.inkSoft, lineHeight: 1.4 }}>{s.text}</span>
+        </div>
+      </div>
+    );
+  } else {
+    const s = tr.evidenceSamples.photo[idx % tr.evidenceSamples.photo.length];
+    body = (
+      <div style={{ display: 'flex', gap: 11, alignItems: 'center' }}>
+        <EvidenceThumb label="IMG" w={52} h={64} hue={JP.peach} />
+        <span style={{ flex: 1, fontFamily: 'Nunito', fontWeight: 700, fontSize: 13, color: JP.ink, lineHeight: 1.4 }}>{s.cap}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="jp-floatin" style={{ position: 'relative' }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '11px 13px',
+        border: '1px solid rgba(255,255,255,0.9)', boxShadow: '0 6px 16px rgba(214,98,168,0.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+          <span style={{ fontSize: 15 }}>{emoji}</span>
+          <span style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 12.5, color: JP.ink }}>{appName}</span>
+          {type === 'voice' && <span style={{ marginLeft: 'auto', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 11.5, color: JP.inkSoft }}>{tr.evidenceSamples.voice[idx % tr.evidenceSamples.voice.length].dur}</span>}
+        </div>
+        {body}
+      </div>
+      <button onClick={onRemove} style={{ position: 'absolute', top: -7, right: -7,
+        width: 22, height: 22, borderRadius: 999, border: 'none', cursor: 'pointer',
+        background: JP.red, color: '#fff', fontSize: 12, lineHeight: 1,
+        boxShadow: '0 3px 8px rgba(255,84,112,0.5)' }}>✕</button>
+    </div>
+  );
+}
+
 // ───────────────────────── HOME ─────────────────────────
-function HomeScreen({ go, chaos, off, mascot }) {
-  const quip = useRotating(QUIPS);
+function HomeScreen({ go, chaos, off, mascot, lang, petPhoto, onPetPhoto }) {
+  const tr = I18N[lang];
+  const quip = useRotating(tr.quips);
+  const onPickPet = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => onPetPhoto && onPetPhoto(ev.target.result);
+    reader.readAsDataURL(f);
+    e.target.value = '';
+  };
   return (
     <Backdrop tint="pink">
       <Particles kind="mix" count={chaos ? 16 : 8} run={!off} />
@@ -49,36 +132,49 @@ function HomeScreen({ go, chaos, off, mascot }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <span style={{ fontSize: 22 }}>🐾</span>
-            <span style={{ fontFamily: 'Fredoka, sans-serif', fontWeight: 600, fontSize: 19, color: JP.ink }}>Judge Paws</span>
+            <span style={{ fontFamily: 'Fredoka, sans-serif', fontWeight: 600, fontSize: 19, color: JP.ink, whiteSpace: 'nowrap' }}>{tr.appName}</span>
           </div>
-          <Glass style={{ borderRadius: 999, padding: '7px 13px', display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span style={{ fontSize: 14 }}>🔥</span>
-            <span style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 14, color: JP.ink }}>5</span>
-          </Glass>
         </div>
 
         {/* mascot + bubble */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <ReactionBubble text={quip} style={{ marginBottom: 14, minHeight: 20 }} />
-          <Mascot size={168} emoji={mascot} />
+          <label className="jp-tap" title={tr.home.petCta} style={{ position: 'relative', cursor: 'pointer', display: 'block' }}>
+            <Mascot size={168} emoji={mascot} />
+            <input type="file" accept="image/*" onChange={onPickPet} style={{ display: 'none' }} />
+          </label>
+          {petPhoto ? (
+            <button onClick={() => onPetPhoto && onPetPhoto('')} className="jp-tap" style={{
+              marginTop: 14, cursor: 'pointer', border: '1.5px solid rgba(255,255,255,0.9)',
+              background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(10px)', padding: '7px 14px', borderRadius: 999,
+              fontFamily: 'Fredoka', fontWeight: 500, fontSize: 13, color: JP.ink }}>↺ {tr.home.useJudge}</button>
+          ) : (
+            <label className="jp-tap" style={{
+              marginTop: 14, cursor: 'pointer', border: '1.5px solid rgba(255,255,255,0.85)',
+              background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(10px)', padding: '7px 14px', borderRadius: 999,
+              display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Nunito', fontWeight: 700, fontSize: 12, color: JP.inkSoft }}>
+              📷 {tr.home.petCta}
+              <input type="file" accept="image/*" onChange={onPickPet} style={{ display: 'none' }} />
+            </label>
+          )}
         </div>
 
         {/* headline */}
         <div style={{ textAlign: 'center', marginBottom: 22 }}>
-          <h1 style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontWeight: 600, fontSize: 38,
-            lineHeight: 1.02, color: JP.ink, letterSpacing: -0.5 }}>
-            Justice Has<br />Four&nbsp;Paws.
+          <h1 style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontWeight: 600, fontSize: 32,
+            lineHeight: 1.06, color: JP.ink, letterSpacing: -0.5 }}>
+            {tr.home.lines[0]}<br />{tr.home.lines[1]}
           </h1>
-          <p style={{ margin: '12px auto 0', maxWidth: 280, fontFamily: 'Nunito, sans-serif', fontWeight: 600,
-            fontSize: 15.5, lineHeight: 1.45, color: JP.inkSoft }}>
-            Upload the evidence. Tell your side. Let the dog decide.
+          <p style={{ margin: '12px auto 0', maxWidth: 300, fontFamily: 'Nunito, sans-serif', fontWeight: 600,
+            fontSize: 15.5, lineHeight: 1.5, color: JP.inkSoft }}>
+            {(tr.home.subLines || [tr.home.sub]).map((l, i) => <React.Fragment key={i}>{l}{i === 0 ? <br /> : null}</React.Fragment>)}
           </p>
         </div>
 
         {/* CTAs */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-          <PawButton full onClick={() => go('type')}>Start a Trial 🐾</PawButton>
-          <PawButton full secondary small onClick={() => go('type')}>Watch Viral Cases ▶</PawButton>
+          <PawButton full onClick={() => go('type')}>{tr.home.start}</PawButton>
+          <PawButton full secondary small onClick={() => go('type')}>{tr.home.watch}</PawButton>
         </div>
       </div>
     </Backdrop>
@@ -86,25 +182,27 @@ function HomeScreen({ go, chaos, off, mascot }) {
 }
 
 // ─────────────────── RELATIONSHIP PICKER ───────────────────
-const REL_TYPES = [
-  { id: 'couple', label: 'Couple', emoji: '💑', sub: 'It’s complicated, romantically' },
-  { id: 'situationship', label: 'Situationship', emoji: '😶‍🌫️', sub: 'Undefined & dangerous' },
-  { id: 'ex', label: 'Ex', emoji: '💔', sub: 'Reopening old cases' },
-  { id: 'roommate', label: 'Roommate', emoji: '🛋️', sub: 'Dishes are evidence' },
-  { id: 'bff', label: 'Best Friend', emoji: '👯', sub: 'Ride or die… allegedly' },
-  { id: 'family', label: 'Family', emoji: '🏠', sub: 'Group chat warfare' },
+const REL_BASE = [
+  { id: 'couple', emoji: '💑' },
+  { id: 'situationship', emoji: '😶‍🌫️' },
+  { id: 'ex', emoji: '💔' },
+  { id: 'roommate', emoji: '🛋️' },
+  { id: 'bff', emoji: '👯' },
+  { id: 'family', emoji: '🏠' },
 ];
 
-function TypeScreen({ go, state, setState, chaos, off }) {
+function TypeScreen({ go, state, setState, chaos, off, lang }) {
+  const tr = I18N[lang];
   const sel = state.relType;
   return (
     <Backdrop tint="lavender">
       <Particles kind="paws" count={chaos ? 10 : 5} run={!off} />
-      <FlowHeader title="Who’s on trial?" sub="Pick the relationship to open a case file." step={0} onBack={() => go('home')} />
+      <FlowHeader title={tr.type.title} sub={tr.type.sub} step={0} onBack={() => go('home')} />
       <div style={{ position: 'relative', zIndex: 3, padding: '6px 20px 20px',
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        {REL_TYPES.map(t => {
+        {REL_BASE.map(t => {
           const active = sel === t.id;
+          const txt = tr.relTypes[t.id];
           return (
             <Glass key={t.id} onClick={() => setState(s => ({ ...s, relType: t.id }))}
               className="jp-tap" style={{
@@ -116,8 +214,8 @@ function TypeScreen({ go, state, setState, chaos, off }) {
                 transition: 'all 0.22s cubic-bezier(.34,1.56,.64,1)',
               }}>
               <div style={{ fontSize: 34, marginBottom: 8 }}>{t.emoji}</div>
-              <div style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 17, color: JP.ink }}>{t.label}</div>
-              <div style={{ fontFamily: 'Nunito', fontWeight: 600, fontSize: 11.5, color: JP.inkSoft, marginTop: 2 }}>{t.sub}</div>
+              <div style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 17, color: JP.ink }}>{txt.label}</div>
+              <div style={{ fontFamily: 'Nunito', fontWeight: 600, fontSize: 11.5, color: JP.inkSoft, marginTop: 2 }}>{txt.sub}</div>
               {active && <div style={{ position: 'absolute', top: 12, right: 12, width: 22, height: 22, borderRadius: 999,
                 background: JP.bubblegum, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 13, boxShadow: '0 4px 10px rgba(255,77,151,0.5)' }}>✓</div>}
@@ -125,22 +223,22 @@ function TypeScreen({ go, state, setState, chaos, off }) {
           );
         })}
       </div>
-      <FlowFooter disabled={!sel} onNext={() => go('upload')} label="Open the Case" />
+      <FlowFooter disabled={!sel} onNext={() => go('tell')} label={tr.type.next} />
     </Backdrop>
   );
 }
 
 // ───────────────────── EVIDENCE UPLOAD ─────────────────────
-const SOURCES = [
-  { id: 'imessage', label: 'iMessage', emoji: '💬' },
-  { id: 'whatsapp', label: 'WhatsApp', emoji: '🟢' },
-  { id: 'discord', label: 'Discord', emoji: '🎮' },
-  { id: 'wechat', label: 'WeChat', emoji: '💚' },
-  { id: 'voice', label: 'Voice Note', emoji: '🎙️' },
-  { id: 'photo', label: 'Photo', emoji: '📸' },
+const SOURCE_BASE = [
+  { id: 'imessage', emoji: '💬' },
+  { id: 'whatsapp', emoji: '🟢' },
+  { id: 'instagram', emoji: '📸' },
+  { id: 'wechat', emoji: '💚' },
+  { id: 'moments', emoji: '👥' },
+  { id: 'photo', emoji: '🖼️' },
 ];
 
-// downscale a chosen image to a compressed JPEG data URL (keeps upload payloads small)
+// downscale a chosen image to a compressed JPEG data URL (keeps payloads small)
 function fileToCompressedDataUrl(file, maxW = 1200, quality = 0.82) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -162,107 +260,85 @@ function fileToCompressedDataUrl(file, maxW = 1200, quality = 0.82) {
   });
 }
 
-function UploadScreen({ go, state, setState, chaos, off }) {
+function UploadScreen({ go, state, setState, chaos, off, lang }) {
+  const tr = I18N[lang];
   const ev = state.evidence;
   const fileRef = React.useRef(null);
   const pendingSrc = React.useRef(null);
-  const [busy, setBusy] = React.useState(false);
-
-  // tapping a source opens the file picker to attach a real screenshot
-  const pick = (src) => { pendingSrc.current = src; if (fileRef.current) { fileRef.current.value = ''; fileRef.current.click(); } };
+  // tapping a source opens the picker → attach a REAL screenshot
+  const add = (src) => { pendingSrc.current = src; if (fileRef.current) { fileRef.current.value = ''; fileRef.current.click(); } };
   const onFile = async (e) => {
-    const file = e.target.files && e.target.files[0];
+    const f = e.target.files && e.target.files[0];
     const src = pendingSrc.current;
-    if (!file || !src) return;
-    setBusy(true);
+    if (!src) return;
+    if (!f) { // user cancelled the picker → keep the pretty sample card so the flow still works
+      setState(s => {
+        const idx = s.evidence.filter(x => x.src.id === src.id).length;
+        return { ...s, evidence: [...s.evidence, { id: Date.now() + Math.random(), src, idx }] };
+      });
+      return;
+    }
     try {
-      const dataUrl = await fileToCompressedDataUrl(file);
-      setState(s => ({ ...s, evidence: [...s.evidence, { id: Date.now() + Math.random(), src, dataUrl, mediaType: 'image/jpeg' }] }));
-    } catch (_) {} finally { setBusy(false); }
+      const dataUrl = await fileToCompressedDataUrl(f);
+      setState(s => {
+        const idx = s.evidence.filter(x => x.src.id === src.id).length;
+        return { ...s, evidence: [...s.evidence, { id: Date.now() + Math.random(), src, idx, dataUrl, mediaType: 'image/jpeg' }] };
+      });
+    } catch (err) {}
   };
   const remove = (id) => setState(s => ({ ...s, evidence: s.evidence.filter(e => e.id !== id) }));
-
   return (
     <Backdrop tint="peach">
       <Particles kind="paws" count={chaos ? 8 : 4} run={!off} />
-      <FlowHeader title="Submit the evidence" sub="Upload a screenshot of the chat. Judge Paws reads everything." step={1} onBack={() => go('type')} />
-
+      <FlowHeader title={tr.upload.title} sub={tr.upload.sub} step={1} onBack={() => go('tell')} />
       <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
 
-      {/* judge mode — Savage is Judge Paws+ (enforced server-side) */}
-      <div style={{ position: 'relative', zIndex: 3, padding: '2px 18px 0', flexShrink: 0, display: 'flex', gap: 8 }}>
-        {[{ id: 'default', label: '⚖️ Classic' }, { id: 'savage', label: '🔥 Savage' }].map(m => {
-          const active = (state.mode || 'default') === m.id;
-          const locked = m.id === 'savage' && (!window.JPB || !JPB.subscribed());
-          return (
-            <button key={m.id} onClick={() => setState(s => ({ ...s, mode: m.id }))} className="jp-tap" style={{
-              padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 13.5,
-              border: active ? `1.5px solid ${JP.bubblegum}` : '1.5px solid rgba(255,255,255,0.9)',
-              background: active ? 'rgba(255,77,151,0.12)' : 'rgba(255,255,255,0.6)',
-              color: active ? '#b32a73' : JP.ink,
-            }}>{m.label}{locked ? ' 🔒' : ''}</button>
-          );
-        })}
-      </div>
-
-      {/* source chips — tap to attach a screenshot from that app */}
+      {/* source chips */}
       <div style={{ position: 'relative', zIndex: 3, padding: '4px 18px 0', flexShrink: 0,
         display: 'flex', gap: 9, flexWrap: 'wrap' }}>
-        {SOURCES.map(s => (
-          <button key={s.id} onClick={() => pick(s)} disabled={busy} className="jp-tap" style={{
+        {SOURCE_BASE.map(s => (
+          <button key={s.id} onClick={() => add(s)} className="jp-tap" style={{
             display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', whiteSpace: 'nowrap',
             padding: '9px 14px', borderRadius: 999, border: '1.5px solid rgba(255,255,255,0.9)',
             background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(14px)',
             fontFamily: 'Fredoka', fontWeight: 500, fontSize: 14, color: JP.ink,
-            boxShadow: '0 5px 14px rgba(214,98,168,0.10)', opacity: busy ? 0.6 : 1,
+            boxShadow: '0 5px 14px rgba(214,98,168,0.10)',
           }}>
-            <span style={{ fontSize: 16 }}>{s.emoji}</span>{s.label} <span style={{ color: JP.bubblegum, fontWeight: 600 }}>+</span>
+            <span style={{ fontSize: 16 }}>{s.emoji}</span>{tr.sources[s.id]} <span style={{ color: JP.bubblegum, fontWeight: 600 }}>+</span>
           </button>
         ))}
       </div>
 
-      {/* dropzone / floated cards */}
-      <div style={{ position: 'relative', zIndex: 3, margin: '16px 18px 0', flex: '1 1 auto', minHeight: 0 }}>
-        <Glass soft style={{ padding: 16, minHeight: 230 }}>
+      {/* dropzone / evidence cards */}
+      <div style={{ position: 'relative', zIndex: 3, margin: '14px 18px 0', flex: '1 1 auto', minHeight: 0,
+        display: 'flex', flexDirection: 'column' }}>
+        <Glass soft style={{ padding: 12, flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {ev.length === 0 ? (
-            <div style={{ height: 200, display: 'flex', flexDirection: 'column', alignItems: 'center',
+            <div style={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column', alignItems: 'center',
               justifyContent: 'center', gap: 10, textAlign: 'center' }}>
-              <div style={{ fontSize: 40 }} className="jp-bob">{busy ? '🔍' : '🐾'}</div>
+              <div style={{ fontSize: 40 }} className="jp-bob">🐾</div>
               <div style={{ fontFamily: 'Fredoka', fontWeight: 500, fontSize: 15, color: JP.inkSoft, maxWidth: 220 }}>
-                {busy ? 'Reading the receipts…' : 'Tap a source above and upload a screenshot of the conversation.'}
+                {tr.upload.empty}
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'flex-start' }}>
-              {ev.map((e, i) => (
-                <div key={e.id} className="jp-floatin" style={{ position: 'relative', animationDelay: (i * 0.04) + 's' }}>
-                  {e.dataUrl
-                    ? <img src={e.dataUrl} alt={e.src.label} style={{ width: 88, height: 110, objectFit: 'cover',
-                        borderRadius: 14, border: '2px solid rgba(255,255,255,0.9)', display: 'block',
-                        boxShadow: '0 6px 16px rgba(214,98,168,0.18)' }} />
-                    : <EvidenceThumb label={e.src.label} hue={[JP.pink, JP.lavender, JP.peach][i % 3]} />}
-                  <div style={{ position: 'absolute', top: -6, left: -6, fontSize: 16,
-                    background: '#fff', borderRadius: 999, width: 24, height: 24,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 3px 8px rgba(0,0,0,0.12)' }}>{e.src.emoji}</div>
-                  <button onClick={() => remove(e.id)} style={{ position: 'absolute', top: -7, right: -7,
-                    width: 22, height: 22, borderRadius: 999, border: 'none', cursor: 'pointer',
-                    background: JP.red, color: '#fff', fontSize: 12, lineHeight: 1,
-                    boxShadow: '0 3px 8px rgba(255,84,112,0.5)' }}>✕</button>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto', paddingRight: 4, paddingTop: 4 }}>
+              {ev.map((e) => (
+                <EvidenceCard key={e.id} srcId={e.src.id} emoji={e.src.emoji} idx={e.idx || 0}
+                  lang={lang} img={e.dataUrl} onRemove={() => remove(e.id)} />
               ))}
             </div>
           )}
         </Glass>
         {ev.length > 0 && (
-          <div style={{ textAlign: 'center', marginTop: 12, fontFamily: 'Fredoka', fontWeight: 500,
-            fontSize: 14, color: JP.bubblegum }}>
-            {ev.length} screenshot{ev.length > 1 ? 's' : ''} submitted 🐾
+          <div style={{ textAlign: 'center', marginTop: 10, fontFamily: 'Fredoka', fontWeight: 500,
+            fontSize: 14, color: JP.bubblegum, flexShrink: 0 }}>
+            {tr.upload.submitted(ev.length)}
           </div>
         )}
       </div>
 
-      <FlowFooter disabled={ev.length === 0 || busy} onNext={() => go('build')} label="Build the Case" />
+      <FlowFooter disabled={false} onNext={() => go('build')} label={tr.upload.next} />
     </Backdrop>
   );
 }
@@ -295,4 +371,4 @@ function FlowFooter({ onNext, disabled, label }) {
   );
 }
 
-Object.assign(window, { HomeScreen, TypeScreen, UploadScreen, FlowHeader, FlowFooter, EvidenceThumb, REL_TYPES, useRotating });
+Object.assign(window, { HomeScreen, TypeScreen, UploadScreen, FlowHeader, FlowFooter, EvidenceThumb, EvidenceCard, WaveBars, REL_BASE, SOURCE_BASE, useRotating });

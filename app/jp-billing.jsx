@@ -1,6 +1,5 @@
-/* Judge Paws — billing: daily free limit, paywall, Stripe subscribe, share-to-unlock.
-   Free metering is client-side (soft, low-friction). Premium MODES are enforced server-side
-   (the server checks the subscriber email), so paid value can't be faked. */
+/* Judge Paws — billing: daily free limit, paywall (EN/中文), Stripe subscribe, share-to-unlock.
+   Free metering is client-side (soft). Premium MODES are enforced server-side. */
 
 (function () {
   const KEY = (k) => 'jpb_' + k;
@@ -34,14 +33,46 @@
   } catch (_) {}
 })();
 
-function Paywall({ reason, onClose, onUnlocked, mascot, chaos, off }) {
+const PAYWALL_COPY = {
+  en: {
+    limitTitle: 'Out of free verdicts today',
+    limitSub: 'Come back tomorrow for a free one — or go unlimited now.',
+    savageTitle: 'Savage Mode is Judge Paws+',
+    savageSub: 'Unlock the ruthless judge — plus unlimited verdicts.',
+    plus: 'Judge Paws+',
+    perks: 'Unlimited verdicts · Savage mode · Appeals',
+    emailPh: 'you@email.com',
+    cta: 'Subscribe — $2.99/mo 🔨',
+    opening: 'Opening checkout…',
+    badEmail: 'Enter a valid email.',
+    share: 'or share Judge Paws to earn a free verdict 🚀',
+    shareText: 'I just got judged by Judge Paws ⚖️🐾 the AI relationship court. Get your verdict:',
+  },
+  zh: {
+    limitTitle: '今天的免费判决用完啦',
+    limitSub: '明天再来有免费的——或者现在解锁无限次。',
+    savageTitle: '毒舌模式是 Judge Paws+ 专属',
+    savageSub: '解锁嘴下不留情的法官——外加无限次判决。',
+    plus: 'Judge Paws+',
+    perks: '无限判决 · 毒舌模式 · 上诉重审',
+    emailPh: 'you@email.com',
+    cta: '订阅 — $2.99/月 🔨',
+    opening: '正在打开收银台…',
+    badEmail: '请输入有效邮箱。',
+    share: '或者分享 Judge Paws,赚一次免费判决 🚀',
+    shareText: '我刚被 AI 恋爱法庭 Judge Paws ⚖️🐾 审判了。你也来领一份判决:',
+  },
+};
+
+function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off }) {
+  const t = PAYWALL_COPY[lang === 'zh' ? 'zh' : 'en'];
   const [email, setEmail] = React.useState((window.JPB && JPB.email()) || '');
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
 
   const subscribe = async () => {
     setErr('');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setErr('Enter a valid email.'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setErr(t.badEmail); return; }
     JPB.setEmail(email);
     setBusy(true);
     try {
@@ -53,20 +84,17 @@ function Paywall({ reason, onClose, onUnlocked, mascot, chaos, off }) {
   };
 
   const shareToUnlock = async () => {
-    const text = 'I just got judged by Judge Paws ⚖️🐾 the AI relationship court. Get your verdict:';
     const url = location.origin;
     try {
-      if (navigator.share) await navigator.share({ text, url });
-      else if (navigator.clipboard) await navigator.clipboard.writeText(text + ' ' + url);
+      if (navigator.share) await navigator.share({ text: t.shareText, url });
+      else if (navigator.clipboard) await navigator.clipboard.writeText(t.shareText + ' ' + url);
     } catch (_) {}
     JPB.earnBonus();
     onUnlocked && onUnlocked();
   };
 
-  const title = reason === 'savage' ? 'Savage Mode is Judge Paws+' : "Out of free verdicts today";
-  const sub = reason === 'savage'
-    ? 'Unlock the ruthless judge — plus unlimited verdicts.'
-    : 'Come back tomorrow for a free one — or go unlimited now.';
+  const title = reason === 'savage' ? t.savageTitle : t.limitTitle;
+  const sub = reason === 'savage' ? t.savageSub : t.limitSub;
 
   return (
     <Backdrop tint="pink">
@@ -83,22 +111,22 @@ function Paywall({ reason, onClose, onUnlocked, mascot, chaos, off }) {
           <p style={{ margin: 0, fontFamily: 'Nunito', fontWeight: 700, fontSize: 14, color: JP.inkSoft, textAlign: 'center', maxWidth: 260 }}>{sub}</p>
 
           <Glass style={{ marginTop: 16, padding: 16, width: '100%' }}>
-            <div style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 19, color: JP.ink, textAlign: 'center' }}>Judge Paws+</div>
+            <div style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 19, color: JP.ink, textAlign: 'center' }}>{t.plus}</div>
             <div style={{ textAlign: 'center', fontFamily: 'Nunito', fontWeight: 800, fontSize: 12.5, color: JP.bubblegum, marginBottom: 12 }}>
-              Unlimited verdicts · Savage mode · Appeals
+              {t.perks}
             </div>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" inputMode="email"
-              style={{ width: '100%', border: '1.5px solid #fbdcec', borderRadius: 12, padding: '12px 14px',
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPh} inputMode="email"
+              style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #fbdcec', borderRadius: 12, padding: '12px 14px',
                 font: 'inherit', fontSize: 15, marginBottom: 10, background: '#fffafd' }} />
             <PawButton full onClick={subscribe} style={{ opacity: busy ? 0.6 : 1, pointerEvents: busy ? 'none' : 'auto' }}>
-              {busy ? 'Opening checkout…' : 'Subscribe — $2.99/mo 🔨'}
+              {busy ? t.opening : t.cta}
             </PawButton>
             {err && <div style={{ color: JP.red, fontWeight: 700, fontSize: 12.5, textAlign: 'center', marginTop: 8 }}>{err}</div>}
           </Glass>
 
           <button onClick={shareToUnlock} className="jp-tap" style={{ marginTop: 14, background: 'none', border: 'none',
             cursor: 'pointer', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 14, color: JP.bubblegum }}>
-            or share Judge Paws to earn a free verdict 🚀
+            {t.share}
           </button>
         </div>
       </div>
