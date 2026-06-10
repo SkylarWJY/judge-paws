@@ -7,7 +7,7 @@ waitlist capture, an interactive courtroom app, and an AI verdict engine powered
 **Claude Opus 4.8**.
 
 <p align="center">
-  <img src="web/judge-paws.jpg" width="160" alt="Judge Paws mascot" style="border-radius:50%">
+  <img src="docs/landing.png" width="420" alt="Judge Paws landing page">
 </p>
 
 ## What's inside
