@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Judge Paw — an AI judge that delivers playful, fair verdicts for couples' disputes.",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "dev": "node --env-file=.env server.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
