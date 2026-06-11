@@ -53,13 +53,15 @@
     transform: translate(-50%, -50%) scale(var(--jp-scale, 1));
     transform-origin: center center; will-change: transform;
   }
-  /* Phone / standalone: drop the mockup, fill the real screen, respect notch + home bar. */
+  /* Phone / standalone: drop the mockup, fill the real screen edge-to-edge. The
+     app's own gradient (matched here) flows continuously THROUGH the status-bar
+     and home-indicator safe areas — no white bars. Safe-area padding is applied
+     to the screen content (in Backdrop), not here, so the bg stays seamless. */
   .jp-stage--full {
     position: fixed; inset: 0; top: 0; left: 0;
     width: 100vw; height: 100vh; height: 100dvh;
     transform: none !important;
-    padding-bottom: env(safe-area-inset-bottom);
-    background: radial-gradient(120% 120% at 50% 0%, #FFE8F4 0%, #F3E9FF 50%, #FFE6DC 100%);
+    background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
   }
   @media (max-width: 520px) {
     body { padding: 0; }
