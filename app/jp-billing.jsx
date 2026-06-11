@@ -9,19 +9,22 @@
   const usage = () => { const u = get('usage', { date: '', used: 0, bonus: 0 }); return u.date === today() ? u : { date: today(), used: 0, bonus: 0 }; };
 
   const JPB = {
-    // Pre-PMF / growth phase: everything is free (Stripe is still test mode anyway,
-    // and the audience can't pay via foreign cards). Flip FREE_FOR_ALL to false to
-    // re-enable the daily-limit paywall + subscriptions later.
-    FREE_FOR_ALL: true,
-    DAILY_FREE: 1,
+    // Growth model: FREE_QUOTA free verdicts/day, then a soft "share or follow"
+    // unlock. Sharing ANY verdict (or sharing/following at the gate) sets a
+    // permanent unlock → unlimited forever. So users who spread it never hit a
+    // wall; only non-sharers see the gate after their free quota. No money.
+    FREE_QUOTA: 3,
     subscribed() { return !!get('sub', false); },
     setSubscribed(v) { set('sub', !!v); },
+    unlocked() { return !!get('unlocked', false); },
+    setUnlocked() { set('unlocked', true); },
     email() { return get('email', '') || ''; },
     setEmail(e) { set('email', e); },
-    remaining() { if (this.FREE_FOR_ALL || this.subscribed()) return Infinity; const u = usage(); return (this.DAILY_FREE + u.bonus) - u.used; },
-    canRun() { return this.FREE_FOR_ALL || this.subscribed() || this.remaining() > 0; },
-    consume() { if (this.subscribed()) return; const u = usage(); u.used += 1; set('usage', u); },
-    earnBonus() { if (this.subscribed()) return; const u = usage(); u.bonus += 1; set('usage', u); },
+    remaining() { if (this.unlocked() || this.subscribed()) return Infinity; const u = usage(); return this.FREE_QUOTA - u.used; },
+    canRun() { return this.unlocked() || this.subscribed() || this.remaining() > 0; },
+    consume() { if (this.unlocked() || this.subscribed()) return; const u = usage(); u.used += 1; set('usage', u); },
+    // sharing a verdict unlocks unlimited — rewards the organic viral loop
+    earnBonus() { this.setUnlocked(); },
   };
   window.JPB = JPB;
 
@@ -37,55 +40,45 @@
   } catch (_) {}
 })();
 
+// Skylar's socials — used by the unlock gate (and reusable elsewhere via window.JP_SOCIAL)
+const JP_SOCIAL = {
+  ig: 'https://www.instagram.com/skylarwjy/',
+  igHandle: '@skylarwjy',
+  xhs: 'https://xhslink.com/m/AXPGBI3TmTh',
+  xhsHandle: '@Skylar创业版',
+};
+window.JP_SOCIAL = JP_SOCIAL;
+
 const PAYWALL_COPY = {
   en: {
-    limitTitle: 'Out of free verdicts today',
-    limitSub: 'Come back tomorrow for a free one — or go unlimited now.',
-    savageTitle: 'Savage Mode is Judge Paws+',
-    savageSub: 'Unlock the ruthless judge — plus unlimited verdicts.',
-    plus: 'Judge Paws+',
-    perks: 'Unlimited verdicts · Savage mode · Appeals',
-    emailPh: 'you@email.com',
-    cta: 'Subscribe — $2.99/mo 🔨',
-    opening: 'Opening checkout…',
-    badEmail: 'Enter a valid email.',
-    share: 'or share Judge Paws to earn a free verdict 🚀',
+    title: 'Want more verdicts?',
+    sub: 'You’ve used today’s free ones. Unlock unlimited — share, or follow Skylar.',
+    shareBtn: '🚀 Share Judge Paws',
+    shareHint: 'instant unlock',
+    or: 'or follow to unlock',
+    igBtn: '📸 Instagram  ' + JP_SOCIAL.igHandle,
+    xhsBtn: '📕 小红书 (RED)  ' + JP_SOCIAL.xhsHandle,
+    followedBtn: 'I followed — continue ✓',
     shareText: 'I just got judged by Judge Paws ⚖️🐾 the AI relationship court. Get your verdict:',
   },
   zh: {
-    limitTitle: '今天的免费判决用完啦',
-    limitSub: '明天再来有免费的——或者现在解锁无限次。',
-    savageTitle: '毒舌模式是 Judge Paws+ 专属',
-    savageSub: '解锁嘴下不留情的法官——外加无限次判决。',
-    plus: 'Judge Paws+',
-    perks: '无限判决 · 毒舌模式 · 上诉重审',
-    emailPh: 'you@email.com',
-    cta: '订阅 — $2.99/月 🔨',
-    opening: '正在打开收银台…',
-    badEmail: '请输入有效邮箱。',
-    share: '或者分享 Judge Paws,赚一次免费判决 🚀',
-    shareText: '我刚被 AI 恋爱法庭 Judge Paws ⚖️🐾 审判了。你也来领一份判决:',
+    title: '想继续判?',
+    sub: '今天的免费次数用完啦。分享一下、或关注 Skylar,即可解锁无限次。',
+    shareBtn: '🚀 分享汪汪法官',
+    shareHint: '分享即刻解锁',
+    or: '或 关注解锁',
+    igBtn: '📸 Instagram  ' + JP_SOCIAL.igHandle,
+    xhsBtn: '📕 小红书  ' + JP_SOCIAL.xhsHandle,
+    followedBtn: '我已关注,继续 ✓',
+    shareText: '我刚被 AI 恋爱法庭 汪汪法官 ⚖️🐾 审判了。你也来领一份判决:',
   },
 };
 
 function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off }) {
   const t = PAYWALL_COPY[lang === 'zh' ? 'zh' : 'en'];
-  const [email, setEmail] = React.useState((window.JPB && JPB.email()) || '');
-  const [busy, setBusy] = React.useState(false);
-  const [err, setErr] = React.useState('');
+  const [opened, setOpened] = React.useState(false);
 
-  const subscribe = async () => {
-    setErr('');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setErr(t.badEmail); return; }
-    JPB.setEmail(email);
-    setBusy(true);
-    try {
-      const res = await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, plan: 'monthly' }) });
-      const d = await res.json();
-      if (!res.ok || !d.url) throw new Error(d.error || 'Checkout unavailable.');
-      window.location.href = d.url;
-    } catch (e) { setErr(e.message); setBusy(false); }
-  };
+  const unlock = () => { if (window.JPB) JPB.setUnlocked(); onUnlocked && onUnlocked(); };
 
   const shareToUnlock = async () => {
     const url = location.origin;
@@ -93,12 +86,21 @@ function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off }) {
       if (navigator.share) await navigator.share({ text: t.shareText, url });
       else if (navigator.clipboard) await navigator.clipboard.writeText(t.shareText + ' ' + url);
     } catch (_) {}
-    JPB.earnBonus();
-    onUnlocked && onUnlocked();
+    unlock();
   };
 
-  const title = reason === 'savage' ? t.savageTitle : t.limitTitle;
-  const sub = reason === 'savage' ? t.savageSub : t.limitSub;
+  const openSocial = (href) => {
+    try { window.open(href, '_blank', 'noopener'); } catch (_) {}
+    setOpened(true);
+  };
+
+  const followBtn = (label, href) => (
+    <button onClick={() => openSocial(href)} className="jp-tap" style={{
+      width: '100%', boxSizing: 'border-box', cursor: 'pointer', marginTop: 9,
+      border: '1.5px solid rgba(214,98,168,0.35)', background: 'rgba(255,255,255,0.85)',
+      borderRadius: 14, padding: '12px 14px', fontFamily: 'Fredoka', fontWeight: 600,
+      fontSize: 14.5, color: JP.ink, textAlign: 'center' }}>{label}</button>
+  );
 
   return (
     <Backdrop tint="pink">
@@ -111,27 +113,30 @@ function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off }) {
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Mascot size={104} emoji={mascot} badge="⭐" />
-          <h2 style={{ margin: '6px 0 2px', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 24, color: JP.ink, textAlign: 'center' }}>{title}</h2>
-          <p style={{ margin: 0, fontFamily: 'Nunito', fontWeight: 700, fontSize: 14, color: JP.inkSoft, textAlign: 'center', maxWidth: 260 }}>{sub}</p>
+          <h2 style={{ margin: '6px 0 2px', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 24, color: JP.ink, textAlign: 'center' }}>{t.title}</h2>
+          <p style={{ margin: 0, fontFamily: 'Nunito', fontWeight: 700, fontSize: 14, color: JP.inkSoft, textAlign: 'center', maxWidth: 270 }}>{t.sub}</p>
 
           <Glass style={{ marginTop: 16, padding: 16, width: '100%' }}>
-            <div style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 19, color: JP.ink, textAlign: 'center' }}>{t.plus}</div>
-            <div style={{ textAlign: 'center', fontFamily: 'Nunito', fontWeight: 800, fontSize: 12.5, color: JP.bubblegum, marginBottom: 12 }}>
-              {t.perks}
+            {/* primary: share → instant unlock (also spreads the app) */}
+            <PawButton full onClick={shareToUnlock}>{t.shareBtn}</PawButton>
+            <div style={{ textAlign: 'center', fontFamily: 'Nunito', fontWeight: 800, fontSize: 11.5, color: JP.bubblegum, marginTop: 6 }}>
+              {t.shareHint}
             </div>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPh} inputMode="email"
-              style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #fbdcec', borderRadius: 12, padding: '12px 14px',
-                font: 'inherit', fontSize: 15, marginBottom: 10, background: '#fffafd' }} />
-            <PawButton full onClick={subscribe} style={{ opacity: busy ? 0.6 : 1, pointerEvents: busy ? 'none' : 'auto' }}>
-              {busy ? t.opening : t.cta}
-            </PawButton>
-            {err && <div style={{ color: JP.red, fontWeight: 700, fontSize: 12.5, textAlign: 'center', marginTop: 8 }}>{err}</div>}
-          </Glass>
 
-          <button onClick={shareToUnlock} className="jp-tap" style={{ marginTop: 14, background: 'none', border: 'none',
-            cursor: 'pointer', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 14, color: JP.bubblegum }}>
-            {t.share}
-          </button>
+            {/* divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 0 2px' }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(214,98,168,0.2)' }} />
+              <span style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 11.5, color: JP.inkSoft, whiteSpace: 'nowrap' }}>{t.or}</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(214,98,168,0.2)' }} />
+            </div>
+
+            {/* follow → honor-system unlock */}
+            {followBtn(t.igBtn, JP_SOCIAL.ig)}
+            {followBtn(t.xhsBtn, JP_SOCIAL.xhs)}
+            {opened && (
+              <PawButton full secondary onClick={unlock} style={{ marginTop: 12 }}>{t.followedBtn}</PawButton>
+            )}
+          </Glass>
         </div>
       </div>
     </Backdrop>
