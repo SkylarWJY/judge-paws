@@ -36,8 +36,7 @@ function Backdrop({ tint = 'pink', children }) {
       <div className="jp-blob" style={{ background: JP.pink, width: 280, height: 280, top: -60, left: -80, animationDelay: '0s' }} />
       <div className="jp-blob" style={{ background: JP.lavender, width: 240, height: 240, top: 220, right: -90, animationDelay: '-6s' }} />
       <div className="jp-blob" style={{ background: JP.peach, width: 220, height: 220, bottom: -70, left: -40, animationDelay: '-3s' }} />
-      <div style={{ position: 'relative', height: '100%', zIndex: 1, display: 'flex', flexDirection: 'column',
-        paddingBottom: 'env(safe-area-inset-bottom)' }}>{children}</div>
+      <div style={{ position: 'relative', height: '100%', zIndex: 1, display: 'flex', flexDirection: 'column' }}>{children}</div>
     </div>
   );
 }

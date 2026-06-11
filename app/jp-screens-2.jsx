@@ -555,12 +555,21 @@ async function shareVerdictLongImage(c, lang, drama, guilty, mascot) {
 function VerdictScreen({ go, state, chaos, off, mascot, drama, lang }) {
   const tr = I18N[lang];
   const c = state.caseData;
+  const showcase = !!(state && state.showcase);
   const [stamp, setStamp] = React.useState(false);
+  // One-time gentle nudge after the user's own first verdict (skippable; not for viral showcases)
+  const [soft, setSoft] = React.useState(() => !showcase && !!window.JPB && !JPB.unlocked() && !JPB.subscribed() && !JPB.softSeen());
+  const dismissSoft = () => { if (window.JPB) JPB.setSoftSeen(); setSoft(false); };
   React.useEffect(() => { const t = setTimeout(() => setStamp(true), 400); return () => clearTimeout(t); }, []);
   const guilty = juryFor(c).filter(j => j.vote === 'guilty').length;
   return (
     <Backdrop tint="pink">
       <Particles kind="confetti" count={chaos ? 22 : 12} run={!off} />
+      {soft && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 90 }}>
+          <Paywall soft lang={lang} mascot={mascot} chaos={chaos} off={off} onClose={dismissSoft} onUnlocked={dismissSoft} />
+        </div>
+      )}
       <div style={{ position: 'relative', zIndex: 3, height: '100%', overflowY: 'auto' }}>
         <div style={{ padding: '58px 18px 120px' }}>
           {/* header */}

@@ -13,11 +13,13 @@
     // unlock. Sharing ANY verdict (or sharing/following at the gate) sets a
     // permanent unlock → unlimited forever. So users who spread it never hit a
     // wall; only non-sharers see the gate after their free quota. No money.
-    FREE_QUOTA: 3,
+    FREE_QUOTA: 2,
     subscribed() { return !!get('sub', false); },
     setSubscribed(v) { set('sub', !!v); },
     unlocked() { return !!get('unlocked', false); },
     setUnlocked() { set('unlocked', true); },
+    softSeen() { return !!get('softseen', false); },   // the one-time gentle nudge
+    setSoftSeen() { set('softseen', true); },
     email() { return get('email', '') || ''; },
     setEmail(e) { set('email', e); },
     remaining() { if (this.unlocked() || this.subscribed()) return Infinity; const u = usage(); return this.FREE_QUOTA - u.used; },
@@ -59,6 +61,9 @@ const PAYWALL_COPY = {
     igBtn: '📸 Instagram  ' + JP_SOCIAL.igHandle,
     xhsBtn: '📕 小红书 (RED)  ' + JP_SOCIAL.xhsHandle,
     followedBtn: 'I followed — continue ✓',
+    softTitle: 'Enjoyed your verdict? 🐾',
+    softSub: 'Follow or share Skylar to support — totally optional.',
+    skipBtn: 'Maybe later →',
     shareText: 'I just got judged by Judge Paws ⚖️🐾 the AI relationship court. Get your verdict:',
   },
   zh: {
@@ -70,11 +75,14 @@ const PAYWALL_COPY = {
     igBtn: '📸 Instagram  ' + JP_SOCIAL.igHandle,
     xhsBtn: '📕 小红书  ' + JP_SOCIAL.xhsHandle,
     followedBtn: '我已关注,继续 ✓',
+    softTitle: '判得还满意吗?🐾',
+    softSub: '关注或分享 Skylar 支持一下~ 完全自愿。',
+    skipBtn: '稍后再说 →',
     shareText: '我刚被 AI 恋爱法庭 汪汪法官 ⚖️🐾 审判了。你也来领一份判决:',
   },
 };
 
-function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off }) {
+function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off, soft = false }) {
   const t = PAYWALL_COPY[lang === 'zh' ? 'zh' : 'en'];
   const [opened, setOpened] = React.useState(false);
 
@@ -107,14 +115,14 @@ function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off }) {
       <Particles kind="confetti" count={chaos ? 14 : 8} run={!off} />
       <div style={{ position: 'relative', zIndex: 5, height: '100%', display: 'flex', flexDirection: 'column',
         padding: '60px 22px 28px', boxSizing: 'border-box' }}>
-        <button onClick={onClose} className="jp-tap" style={{ position: 'absolute', top: 54, left: 20, width: 38, height: 38,
+        {!soft && <button onClick={onClose} className="jp-tap" style={{ position: 'absolute', top: 54, left: 20, width: 38, height: 38,
           borderRadius: 999, border: '1.5px solid rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.6)',
-          backdropFilter: 'blur(14px)', cursor: 'pointer', fontSize: 18, color: JP.ink }}>‹</button>
+          backdropFilter: 'blur(14px)', cursor: 'pointer', fontSize: 18, color: JP.ink }}>‹</button>}
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Mascot size={104} emoji={mascot} badge="⭐" />
-          <h2 style={{ margin: '6px 0 2px', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 24, color: JP.ink, textAlign: 'center' }}>{t.title}</h2>
-          <p style={{ margin: 0, fontFamily: 'Nunito', fontWeight: 700, fontSize: 14, color: JP.inkSoft, textAlign: 'center', maxWidth: 270 }}>{t.sub}</p>
+          <h2 style={{ margin: '6px 0 2px', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 24, color: JP.ink, textAlign: 'center' }}>{soft ? t.softTitle : t.title}</h2>
+          <p style={{ margin: 0, fontFamily: 'Nunito', fontWeight: 700, fontSize: 14, color: JP.inkSoft, textAlign: 'center', maxWidth: 270 }}>{soft ? t.softSub : t.sub}</p>
 
           <Glass style={{ marginTop: 16, padding: 16, width: '100%' }}>
             {/* primary: share → instant unlock (also spreads the app) */}
@@ -137,6 +145,13 @@ function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off }) {
               <PawButton full secondary onClick={unlock} style={{ marginTop: 12 }}>{t.followedBtn}</PawButton>
             )}
           </Glass>
+
+          {soft && (
+            <button onClick={onClose} className="jp-tap" style={{ marginTop: 14, background: 'none', border: 'none',
+              cursor: 'pointer', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 14, color: JP.inkSoft }}>
+              {t.skipBtn}
+            </button>
+          )}
         </div>
       </div>
     </Backdrop>
