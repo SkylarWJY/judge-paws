@@ -2,8 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
 <title>Judge Paws — The First AI Relationship Court</title>
+
+  <!-- Add-to-home-screen / PWA: open fullscreen, branded icon, never clip -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#FFE8F4" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Judge Paws" />
+  <link rel="apple-touch-icon" href="assets/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png" />
   <meta name="description" content="Hold court with Judge Paws: tell your side by voice, submit the receipts, and a jury of five AI dogs delivers your verdict. Bilingual EN/中文." />
   <link rel="canonical" href="https://judgepaws.skylarnyc.com/app/index.html" />
   <meta name="robots" content="index,follow" />
@@ -21,13 +31,28 @@
   html, body { margin: 0; padding: 0; }
   body {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex; align-items: center; justify-content: center;
     background: radial-gradient(120% 120% at 50% 0%, #FFE8F4 0%, #F3E9FF 50%, #FFE6DC 100%);
+    background-attachment: fixed;
     font-family: 'Nunito', sans-serif;
     padding: 24px;
+    overflow: hidden;
     -webkit-font-smoothing: antialiased;
   }
   #root { display: flex; align-items: center; justify-content: center; }
+  /* Contain-scale the fixed 402×874 design so the WHOLE phone always fits any
+     screen with nothing clipped. Fixed-center pins the centre to the viewport
+     so scaling is exact regardless of the design being taller than the screen.
+     --jp-scale is computed in JS (capped at 1). */
+  .jp-stage {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(var(--jp-scale, 1));
+    transform-origin: center center; will-change: transform;
+  }
+  @media (max-width: 520px) {
+    body { padding: 0; }
+  }
 
   /* ── animations ── */
   @keyframes jp-blob-float {
@@ -234,6 +259,7 @@
       return (
         <React.Fragment>
           {calm && <style>{`.jp-blob{animation-duration:46s!important;opacity:0.35!important;} .jp-bob{animation-duration:6s!important;} .jp-screen{animation:none!important;}`}</style>}
+          <div className="jp-stage">
           <IOSDevice height={DEVICE_H}>
             <div style={{ position: 'relative', width: '100%', height: DEVICE_H }}>
               <div key={screen} className="jp-screen" style={{ height: DEVICE_H }}>{screens[screen]}</div>
@@ -241,6 +267,7 @@
               <ShareToast show={toast} text={I18N[lang].toast} />
             </div>
           </IOSDevice>
+          </div>
           <TweaksPanel title="Tweaks">
             <TweakSection label="Vibe" />
             <TweakRadio label="Particles" value={t.particles}
@@ -269,6 +296,20 @@
     }
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+    // Fit the whole 402×{DEVICE_H} phone into any viewport — contain-scale, never clip.
+    function fitStage() {
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var pad = vw <= 520 ? 0 : 48; // edge-to-edge on phones, breathing room on desktop
+      var s = Math.min((vw - pad) / 402, (vh - pad) / DEVICE_H, 1);
+      document.documentElement.style.setProperty('--jp-scale', s);
+    }
+    window.addEventListener('resize', fitStage);
+    window.addEventListener('orientationchange', function () { setTimeout(fitStage, 80); });
+    window.addEventListener('load', fitStage);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', fitStage);
+    fitStage();
+    requestAnimationFrame(fitStage);
   </script>
 
   <template id="__bundler_thumbnail">
