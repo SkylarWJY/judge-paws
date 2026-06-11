@@ -708,6 +708,27 @@ function VerdictScreen({ go, state, chaos, off, mascot, drama, lang }) {
             </div>
             <div style={{ fontFamily: 'Fredoka', fontWeight: 500, fontSize: 16, color: JP.ink, lineHeight: 1.35 }}>{c.caption}</div>
           </Glass>
+
+          {/* always-on "follow Skylar" social footer */}
+          {(() => {
+            const SOC = window.JP_SOCIAL || {};
+            const links = [['📸 Instagram', SOC.ig], ['📕 小红书', SOC.xhs], ['💼 LinkedIn', SOC.linkedin]].filter(l => l[1]);
+            return (
+              <div style={{ marginTop: 18, textAlign: 'center' }}>
+                <div style={{ fontFamily: 'Nunito', fontWeight: 800, fontSize: 11, letterSpacing: 1, color: JP.inkSoft, marginBottom: 9 }}>
+                  {tr.verdict.followMe}
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {links.map(([label, href]) => (
+                    <a key={href} href={href} target="_blank" rel="noopener noreferrer" className="jp-tap" style={{
+                      textDecoration: 'none', fontFamily: 'Fredoka', fontWeight: 600, fontSize: 12.5, color: JP.ink,
+                      background: 'rgba(255,255,255,0.72)', border: '1px solid rgba(214,98,168,0.28)',
+                      borderRadius: 999, padding: '8px 13px', whiteSpace: 'nowrap' }}>{label}</a>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
