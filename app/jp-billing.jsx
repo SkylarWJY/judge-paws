@@ -9,13 +9,17 @@
   const usage = () => { const u = get('usage', { date: '', used: 0, bonus: 0 }); return u.date === today() ? u : { date: today(), used: 0, bonus: 0 }; };
 
   const JPB = {
+    // Pre-PMF / growth phase: everything is free (Stripe is still test mode anyway,
+    // and the audience can't pay via foreign cards). Flip FREE_FOR_ALL to false to
+    // re-enable the daily-limit paywall + subscriptions later.
+    FREE_FOR_ALL: true,
     DAILY_FREE: 1,
     subscribed() { return !!get('sub', false); },
     setSubscribed(v) { set('sub', !!v); },
     email() { return get('email', '') || ''; },
     setEmail(e) { set('email', e); },
-    remaining() { if (this.subscribed()) return Infinity; const u = usage(); return (this.DAILY_FREE + u.bonus) - u.used; },
-    canRun() { return this.subscribed() || this.remaining() > 0; },
+    remaining() { if (this.FREE_FOR_ALL || this.subscribed()) return Infinity; const u = usage(); return (this.DAILY_FREE + u.bonus) - u.used; },
+    canRun() { return this.FREE_FOR_ALL || this.subscribed() || this.remaining() > 0; },
     consume() { if (this.subscribed()) return; const u = usage(); u.used += 1; set('usage', u); },
     earnBonus() { if (this.subscribed()) return; const u = usage(); u.bonus += 1; set('usage', u); },
   };
