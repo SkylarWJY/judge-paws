@@ -1,0 +1,22 @@
+name: Keep Render warm
+
+# Render's free tier spins the service down after ~15 min of inactivity, so the
+# first visitor then waits ~30–50s for a cold start. This pings it every ~10 min
+# to keep it awake. (GitHub cron is best-effort and can be delayed a few minutes.)
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the live service
+        run: |
+          for url in \
+            "https://judge-paws.onrender.com/app/index.html" \
+            "https://judgepaws.skylarnyc.com/app/index.html"; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$url" || echo "000")
+            echo "$url -> $code"
+          done
