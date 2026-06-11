@@ -200,8 +200,23 @@ function IOSList({ header, children, dark = false }) {
 // ─────────────────────────────────────────────────────────────
 function IOSDevice({
   children, width = 402, height = 874, dark = false,
-  title, keyboard = false,
+  title, keyboard = false, bare = false,
 }) {
+  // bare: no fake bezel / dynamic island / status bar / home indicator — used on
+  // real phones & standalone PWA so the app fills the screen natively (no
+  // phone-in-phone). The screens bring their own background + safe padding.
+  if (bare) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
+        background: dark ? '#000' : 'transparent',
+        fontFamily: '-apple-system, system-ui, sans-serif',
+        WebkitFontSmoothing: 'antialiased',
+      }}>
+        {children}
+      </div>
+    );
+  }
   return (
     <div style={{
       width, height, borderRadius: 48, overflow: 'hidden',

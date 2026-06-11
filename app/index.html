@@ -50,6 +50,14 @@
     transform: translate(-50%, -50%) scale(var(--jp-scale, 1));
     transform-origin: center center; will-change: transform;
   }
+  /* Phone / standalone: drop the mockup, fill the real screen, respect notch + home bar. */
+  .jp-stage--full {
+    position: fixed; inset: 0; top: 0; left: 0;
+    width: 100vw; height: 100vh; height: 100dvh;
+    transform: none !important;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: radial-gradient(120% 120% at 50% 0%, #FFE8F4 0%, #F3E9FF 50%, #FFE6DC 100%);
+  }
   @media (max-width: 520px) {
     body { padding: 0; }
   }
@@ -205,9 +213,24 @@
       );
     }
 
+    function detectPhone() {
+      try {
+        return window.matchMedia('(max-width: 520px)').matches
+          || window.matchMedia('(display-mode: standalone)').matches
+          || window.navigator.standalone === true;
+      } catch (e) { return false; }
+    }
+
     function App() {
       const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
       const [lang, setLang] = useState(getInitialLang);
+      const [isPhone, setIsPhone] = useState(detectPhone);
+      useEffect(() => {
+        const onChange = () => setIsPhone(detectPhone());
+        window.addEventListener('resize', onChange);
+        window.addEventListener('orientationchange', onChange);
+        return () => { window.removeEventListener('resize', onChange); window.removeEventListener('orientationchange', onChange); };
+      }, []);
       const [petPhoto, setPetPhoto] = useState(() => { try { return localStorage.getItem('judgepaws_pet') || ''; } catch (e) { return ''; } });
       const setPet = useCallback((dataUrl) => {
         setPetPhoto(dataUrl || '');
@@ -259,10 +282,10 @@
       return (
         <React.Fragment>
           {calm && <style>{`.jp-blob{animation-duration:46s!important;opacity:0.35!important;} .jp-bob{animation-duration:6s!important;} .jp-screen{animation:none!important;}`}</style>}
-          <div className="jp-stage">
-          <IOSDevice height={DEVICE_H}>
-            <div style={{ position: 'relative', width: '100%', height: DEVICE_H }}>
-              <div key={screen} className="jp-screen" style={{ height: DEVICE_H }}>{screens[screen]}</div>
+          <div className={isPhone ? 'jp-stage jp-stage--full' : 'jp-stage'}>
+          <IOSDevice height={isPhone ? '100%' : DEVICE_H} bare={isPhone}>
+            <div style={{ position: 'relative', width: '100%', height: isPhone ? '100%' : DEVICE_H }}>
+              <div key={screen} className="jp-screen" style={{ height: '100%' }}>{screens[screen]}</div>
               <LangToggle lang={lang} onChange={changeLang} />
               <ShareToast show={toast} text={I18N[lang].toast} />
             </div>
