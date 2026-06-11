@@ -22,6 +22,22 @@ const I18N = {
     },
     viralCases: [
       {
+        id: 'cousin-gate', tag: '🔥 Storytime',
+        headline: 'She cheated… with her own cousin',
+        blurb: 'He dropped the receipts mid-story. Turns out the “family reunion” energy was very literal.',
+        likes: '487K',
+        case: {
+          plaintiff: { name: 'Kai', emoji: '🎥', role: 'The One Filming Storytime', score: 79, quote: '“‘Family gathering.’ I did NOT think it meant that.”' },
+          defendant: { name: 'Bre', emoji: '👀', role: 'The Family-First One', score: 21, quote: '“It honestly meant nothing — he’s my cousin.”' },
+          drama: 98, blame: 91,
+          redFlags: ['Cheated — with her own cousin', '“It meant nothing” (the cousin disagrees)', 'Family group chat is now a crime scene', 'Said “we’re basically family anyway” — unironically'],
+          greenFlags: ['Confessed right before the receipts dropped (barely)'],
+          ruling: 'GUILTY OF KEEPING IT IN THE FAMILY', rulingOf: 'Bre',
+          judgeNote: 'The court finds that “with your cousin” is an aggravating factor, not a footnote. This year’s family reunion is hereby canceled. That said, Kai — filming the breakup for storytime content the same night is its own misdemeanor. Bre is sentenced to a full apology to the entire family group chat; the cousin is named an unindicted co-conspirator.',
+          caption: 'She cheated on me with her COUSIN and 5 AI dogs canceled her at the family reunion 🦃🔨 #JudgePaws',
+        },
+      },
+      {
         id: 'situationship-fraud', tag: '🇺🇸 Situationship',
         headline: '“We were never official” — after 8 months',
         blurb: 'He met the friends, did the weekly sleepovers… then dropped the label, not the L-word.',
@@ -241,6 +257,22 @@ const I18N = {
       tryYours: '⚖️ 那来判判我的',
     },
     viralCases: [
+      {
+        id: 'cousin-gate', tag: '🔥 全网吃瓜',
+        headline: '她出轨的对象，是她自己的表哥',
+        blurb: '录屏实锤全网一放，所谓「家庭聚会」原来是真·字面意思。',
+        likes: '48.7万',
+        case: {
+          plaintiff: { name: '阿凯', emoji: '🎥', role: '边拍 storytime 边裂开的人', score: 79, quote: '「家庭聚会……我真没想到是这个意思。」' },
+          defendant: { name: '小贝', emoji: '👀', role: '家庭第一的人', score: 21, quote: '「那真的没什么意思，他是我表哥。」' },
+          drama: 98, blame: 91,
+          redFlags: ['出轨对象是亲表哥', '「真的没什么」（表哥不这么认为）', '家族群已成案发现场', '认真说出「我们本来就算一家人」'],
+          greenFlags: ['在实锤之前抢先坦白了（就早那么一点点）'],
+          ruling: '亲上加亲罪 · 有罪', rulingOf: '小贝',
+          judgeNote: '本庭认定：出轨对象是「表哥」属于加重情节，不是脚注。今年的家族聚会就地取消。不过阿凯，你分手当晚就开机拍 storytime 恰流量，也构成轻罪一桩。小贝被判处：向整个家族群公开道歉；表哥被列为未起诉的共犯。',
+          caption: '她跟自己表哥出轨，被 5 只 AI 狗当场在家族群宣判 🦃🔨 #汪汪法官',
+        },
+      },
       {
         id: 'situationship-fraud', tag: '🇺🇸 暧昧',
         headline: '暧昧 8 个月，他说「我们从来没正式在一起过」',
