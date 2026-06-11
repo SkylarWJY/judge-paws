@@ -586,6 +586,50 @@ function VerdictScreen({ go, state, chaos, off, mascot, drama, lang }) {
               fontSize: 12, color: JP.inkFaint }}>🐾 judgepaws.app</div>
           </Glass>
 
+          {/* case file: what happened + key evidence (showcase cases carry these) */}
+          {(c.story || (c.evidence && c.evidence.length)) ? (
+            <Glass style={{ marginTop: 14, padding: '18px 16px' }}>
+              {c.story ? (
+                <div style={{ marginBottom: (c.evidence && c.evidence.length) ? 16 : 0 }}>
+                  <SectionLabel icon="📝" text={tr.court.testimony} />
+                  <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 14, padding: '12px 14px',
+                    border: '1px solid rgba(255,255,255,0.9)', fontFamily: 'Nunito', fontWeight: 600,
+                    fontSize: 13, color: JP.ink, lineHeight: 1.5 }}>
+                    “{c.story}”
+                  </div>
+                </div>
+              ) : null}
+              {c.evidence && c.evidence.length ? (
+                <div>
+                  <SectionLabel icon="🧾" text={tr.court.keyEvidence} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                    {c.evidence.map((e, i) => (
+                      <div key={i} className="jp-floatin" style={{ animationDelay: (i * 0.06) + 's',
+                        background: 'rgba(255,255,255,0.7)', borderRadius: 14, padding: '11px 13px',
+                        border: '1px solid rgba(255,255,255,0.9)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: (e.them || e.cap) ? 8 : 0 }}>
+                          <span style={{ fontSize: 14 }}>{e.emoji}</span>
+                          <span style={{ fontFamily: 'Fredoka', fontWeight: 600, fontSize: 12, color: JP.ink }}>{tr.sources[e.src] || e.src}</span>
+                        </div>
+                        {e.cap ? (
+                          <div style={{ fontFamily: 'Nunito', fontWeight: 600, fontSize: 12.5, color: JP.inkSoft, lineHeight: 1.4 }}>{e.cap}</div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            {e.them ? <div style={{ alignSelf: 'flex-start', maxWidth: '84%', background: '#F1ECF4', color: JP.ink,
+                              padding: '7px 11px', borderRadius: '14px 14px 14px 4px', fontFamily: 'Nunito', fontWeight: 600, fontSize: 12.5, lineHeight: 1.3 }}>{e.them}</div> : null}
+                            {e.me ? <div style={{ alignSelf: 'flex-end', maxWidth: '84%', color: '#fff',
+                              background: `linear-gradient(180deg, ${JP.pink}, ${JP.bubblegum})`,
+                              padding: '7px 11px', borderRadius: '14px 14px 4px 14px', fontFamily: 'Nunito', fontWeight: 700, fontSize: 12.5, lineHeight: 1.3 }}>{e.me}</div> : null}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </Glass>
+          ) : null}
+
           {/* scores */}
           <Glass style={{ marginTop: 14, padding: '18px 16px' }}>
             <SectionLabel icon="💳" text={tr.verdict.creditScore} />

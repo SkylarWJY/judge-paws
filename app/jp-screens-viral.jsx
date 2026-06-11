@@ -11,7 +11,9 @@ function ViralScreen({ go, state, setState, lang, chaos, off }) {
       plaintiff: { ...c.case.plaintiff, color: JP.lavender },
       defendant: { ...c.case.defendant, color: JP.bubblegum },
     };
-    setState(s => ({ ...s, caseData: cd, you: c.case.plaintiff.name, them: c.case.defendant.name }));
+    const ev = (c.case.evidence || []).map((e, i) => ({ id: i, src: { id: e.src, emoji: e.emoji }, idx: i }));
+    setState(s => ({ ...s, caseData: cd, you: c.case.plaintiff.name, them: c.case.defendant.name,
+      story: c.case.story || '', evidence: ev }));
     go('verdict');
   };
 

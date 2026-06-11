@@ -29,6 +29,11 @@ const I18N = {
         case: {
           plaintiff: { name: 'Kai', emoji: '🎥', role: 'The One Filming Storytime', score: 79, quote: '“‘Family gathering.’ I did NOT think it meant that.”' },
           defendant: { name: 'Bre', emoji: '👀', role: 'The Family-First One', score: 21, quote: '“It honestly meant nothing — he’s my cousin.”' },
+          story: 'Two years together. She swore the family BBQ was nothing — cousins, potato salad, done. Then the 2am texts surfaced and “keeping it in the family” stopped being a figure of speech.',
+          evidence: [
+            { src: 'imessage', emoji: '💬', them: 'last night was a mistake, we can’t tell anyone 🙈', me: 'BRE. THAT IS YOUR COUSIN.' },
+            { src: 'instagram', emoji: '📸', cap: 'Tagged at the “family BBQ” — same blanket, 2:14am timestamp.' },
+          ],
           drama: 98, blame: 91,
           redFlags: ['Cheated — with her own cousin', '“It meant nothing” (the cousin disagrees)', 'Family group chat is now a crime scene', 'Said “we’re basically family anyway” — unironically'],
           greenFlags: ['Confessed right before the receipts dropped (barely)'],
@@ -45,6 +50,11 @@ const I18N = {
         case: {
           plaintiff: { name: 'Maya', emoji: '🙍🏻‍♀️', role: 'The One Who Caught Feelings', score: 82, quote: '“Eight months. I met his mom. ‘Never official’??”' },
           defendant: { name: 'Tyler', emoji: '🤡', role: 'The One Who Didn’t', score: 38, quote: '“I never asked her to be my girlfriend, your honor.”' },
+          story: 'Eight months. I met his mom, kept a toothbrush at his place, spent every weekend there. The day I asked what we were, he said “we were never really official.” I checked the lease — my name is on it.',
+          evidence: [
+            { src: 'imessage', emoji: '💬', them: 'why are you making this a thing, we’re just chilling', me: 'i met your MOTHER, tyler.' },
+            { src: 'instagram', emoji: '📸', cap: 'Watches every story, posts me in zero — liked his ex’s beach pic mid-argument.' },
+          ],
           drama: 94, blame: 87,
           redFlags: ['“We were never official” (month 8)', 'Watches every story, posts you in none', '“I’m just not ready for a label”', 'Liked his ex’s beach pic mid-argument'],
           greenFlags: ['Remembered her coffee order', 'Showed up to her birthday (late)'],
@@ -61,6 +71,11 @@ const I18N = {
         case: {
           plaintiff: { name: 'Sam', emoji: '😤', role: 'Roommate A', score: 88, quote: '“It had my NAME on it. In SHARPIE.”' },
           defendant: { name: 'Jordan', emoji: '🍝', role: 'Roommate B', score: 44, quote: '“Maybe you ate it and forgot, bro. It happens.”' },
+          story: 'It said “DO NOT EAT — Sam” in Sharpie. I was saving it for a 14-hour shift. Came home to an empty Tupperware in the sink. He said I “probably ate it sleep-deprived.” I work nights. I was AT WORK.',
+          evidence: [
+            { src: 'imessage', emoji: '💬', them: 'maybe you ate it and forgot? happens to me all the time', me: 'i was on a SHIFT. there is a clock-in.' },
+            { src: 'photo', emoji: '📸', cap: 'Lid still labeled, container scraped clean — and the dish soap is empty too.' },
+          ],
           drama: 81, blame: 92,
           redFlags: ['Ate labeled leftovers', '“Maybe YOU ate it” (gaslighting)', 'Never replaces the dish soap', 'Calls everything “communal” except his own snacks'],
           greenFlags: ['Does take the trash out', 'Apologized after the receipts'],
@@ -178,6 +193,8 @@ const I18N = {
       presiding: 'Judge Paws presiding',
       plaintiff: 'PLAINTIFF',
       defendant: 'DEFENDANT',
+      testimony: 'What happened',
+      keyEvidence: 'Key evidence',
       evidenceOnFile: (n) => `Evidence on file (${n})`,
       dogJury: 'The Dog Jury',
       votedGuilty: (g) => `${g}/5 voted guilty`,
@@ -265,6 +282,11 @@ const I18N = {
         case: {
           plaintiff: { name: '阿凯', emoji: '🎥', role: '边拍 storytime 边裂开的人', score: 79, quote: '「家庭聚会……我真没想到是这个意思。」' },
           defendant: { name: '小贝', emoji: '👀', role: '家庭第一的人', score: 21, quote: '「那真的没什么意思，他是我表哥。」' },
+          story: '在一起两年。她发誓那场家庭聚会就是表亲加土豆沙拉，没别的。结果凌晨两点的聊天记录浮出水面——所谓「一家人」原来是字面意思。',
+          evidence: [
+            { src: 'wechat', emoji: '💬', them: '昨晚是个意外，别跟任何人说🙈', me: '小贝。那是你表哥。' },
+            { src: 'moments', emoji: '📸', cap: '定位在「家庭烧烤」——同一条毯子，时间戳凌晨 2:14。' },
+          ],
           drama: 98, blame: 91,
           redFlags: ['出轨对象是亲表哥', '「真的没什么」（表哥不这么认为）', '家族群已成案发现场', '认真说出「我们本来就算一家人」'],
           greenFlags: ['在实锤之前抢先坦白了（就早那么一点点）'],
@@ -281,6 +303,11 @@ const I18N = {
         case: {
           plaintiff: { name: 'Maya', emoji: '🙍🏻‍♀️', role: '动了真心的那个', score: 82, quote: '「八个月，我都见过他妈了。『从来没正式过』？」' },
           defendant: { name: 'Tyler', emoji: '🤡', role: '没动心的那个', score: 38, quote: '「我从没正式问过她要不要做我女朋友，法官大人。」' },
+          story: '八个月。我见了他妈，在他家放着牙刷，每个周末都过去。我问我们算什么，他说「我们从来没真正在一起过」。可租房合同上，有我的名字。',
+          evidence: [
+            { src: 'wechat', emoji: '💬', them: '你干嘛非要给这事下定义，我们就是处着', me: '我都见过你妈了，Tyler。' },
+            { src: 'moments', emoji: '📸', cap: '我每条动态他都看，却从不发我；吵架中途还给前任的海滩照点赞。' },
+          ],
           drama: 94, blame: 87,
           redFlags: ['「我们从来没正式过」（都第 8 个月了）', '秒看你每条动态，却从不发你', '「我只是还没准备好给名分」', '吵架吵到一半，给前任的沙滩照点了赞'],
           greenFlags: ['记得她常点的咖啡', '来了她的生日（迟到）'],
@@ -297,6 +324,11 @@ const I18N = {
         case: {
           plaintiff: { name: 'Sam', emoji: '😤', role: '室友 A', score: 88, quote: '「上面写了我的名字。马克笔写的。」' },
           defendant: { name: 'Jordan', emoji: '🍝', role: '室友 B', score: 44, quote: '「可能是你自己吃了忘了吧老哥，常有的事。」' },
+          story: '盒子上用马克笔写着「别吃——Sam」。我留着它准备熬一个 14 小时的班。回到家：空盒子躺在水池里。他说我「大概是熬夜迷糊自己吃了」。我上夜班，那会儿我在公司打卡。',
+          evidence: [
+            { src: 'wechat', emoji: '💬', them: '会不会是你自己吃了忘了？我经常这样', me: '我在上班，打卡记录都在。' },
+            { src: 'photo', emoji: '📸', cap: '盖子还贴着名字，盒子被刮得干干净净；洗洁精也空了。' },
+          ],
           drama: 81, blame: 92,
           redFlags: ['吃了贴名字的剩菜', '「可能是你自己吃的」（反向 PUA）', '从不补洗洁精', '什么都叫「公用」，除了他自己的零食'],
           greenFlags: ['确实会去倒垃圾', '看了证据后道了歉'],
@@ -414,6 +446,8 @@ const I18N = {
       presiding: '汪汪法官主审',
       plaintiff: '原告',
       defendant: '被告',
+      testimony: '案情陈述',
+      keyEvidence: '关键证据',
       evidenceOnFile: (n) => `在案证据（${n}）`,
       dogJury: '汪汪陪审团',
       votedGuilty: (g) => `${g}/5 判定有罪`,
