@@ -36,6 +36,11 @@ function Backdrop({ tint = 'pink', children }) {
       <div className="jp-blob" style={{ background: JP.pink, width: 280, height: 280, top: -60, left: -80, animationDelay: '0s' }} />
       <div className="jp-blob" style={{ background: JP.lavender, width: 240, height: 240, top: 220, right: -90, animationDelay: '-6s' }} />
       <div className="jp-blob" style={{ background: JP.lavender, width: 220, height: 220, bottom: -70, left: -40, animationDelay: '-3s' }} />
+      {/* bottom fade → flat #FBE7FF: the screen's bottom edge becomes the exact
+          same flat colour as the page canvas below it, so the safe-area seam is
+          mathematically invisible (blobs/gradient can never poke through). */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110, pointerEvents: 'none',
+        background: 'linear-gradient(180deg, rgba(251,231,255,0) 0%, #FBE7FF 78%, #FBE7FF 100%)' }} />
       <div style={{ position: 'relative', height: '100%', zIndex: 1, display: 'flex', flexDirection: 'column',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>{children}</div>
     </div>
