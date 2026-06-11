@@ -365,7 +365,14 @@ const server = createServer(async (req, res) => {
   const safe = normalize(path).replace(/^(\.\.[/\\])+/, "");
   try {
     const data = await readFile(join(ROOT, safe));
-    res.writeHead(200, { "content-type": MIME[extname(safe)] || "application/octet-stream" });
+    const ext = extname(safe);
+    // App code (html/jsx/json) must always be fresh — otherwise iOS caches a
+    // stale index.html/CSS and updates never reach installed home-screen PWAs.
+    // Static assets (images/fonts) can cache hard.
+    const cache = /\.(html|jsx|json|webmanifest)$/i.test(safe)
+      ? "no-cache, must-revalidate"
+      : "public, max-age=86400";
+    res.writeHead(200, { "content-type": MIME[ext] || "application/octet-stream", "cache-control": cache });
     res.end(data);
   } catch {
     res.writeHead(404, { "content-type": "text/plain" }); res.end("Not found");
