@@ -179,6 +179,7 @@ const I18N = {
       bubbleWork: 'Hmm… let me sniff the evidence. 🐾',
       enter: 'Enter Relationship Court ⚖️',
       investigating: 'Investigating…',
+      found: (n) => n + ' found',
       steps: [
         { label: 'Reconstructing the timeline', tail: '' },
         { label: 'Tagging emotional moments', tail: '7 found' },
@@ -432,6 +433,7 @@ const I18N = {
       bubbleWork: '嗯……让本汪闻闻这些证据。🐾',
       enter: '进入关系法庭 ⚖️',
       investigating: '调查中……',
+      found: (n) => '发现 ' + n + ' 处',
       steps: [
         { label: '还原事件时间线', tail: '' },
         { label: '标记情绪时刻', tail: '发现 7 处' },

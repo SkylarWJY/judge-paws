@@ -45,10 +45,14 @@ async function fetchTrial(st, lang) {
   return res.json();
 }
 function withTheme(api) {
+  // Guarantee valid credit scores even when the model returns 0/empty
+  // (e.g. the user typed nothing) — the rings must never read blank.
+  const score = (s, def) => { const n = Math.round(Number(s)); return (n > 0 && n <= 100) ? n : def; };
+  const p = api.plaintiff || {}, d = api.defendant || {};
   return {
     ...api,
-    plaintiff: { ...api.plaintiff, color: JP.lavender },
-    defendant: { ...api.defendant, color: JP.bubblegum },
+    plaintiff: { ...p, score: score(p.score, 71), color: JP.lavender },
+    defendant: { ...d, score: score(d.score, 34), color: JP.bubblegum },
   };
 }
 
@@ -80,10 +84,27 @@ const BUILD_ICONS = ['📜', '💗', '🔀', '🚩', '💚', '🔮'];
 function BuildScreen({ go, state, setState, chaos, off, mascot, lang }) {
   const tr = I18N[lang];
   const steps = tr.build.steps;
+  const showcase = !!(state && state.showcase);   // viral case: pre-built, skip the API
   const [done, setDone] = React.useState(0);
   const [settled, setSettled] = React.useState(false);  // backend call resolved or failed
-  const [paywall, setPaywall] = React.useState(() => window.JPB ? !JPB.canRun() : false);
+  const [paywall, setPaywall] = React.useState(() => (showcase || !window.JPB) ? false : !JPB.canRun());
   const startedRef = React.useRef(false);
+
+  // "Found N" tallies, derived from the actual verdict so they vary per case
+  const cd = state.caseData || {};
+  const tallies = React.useMemo(() => {
+    const rf = (cd.redFlags || []).length, gf = (cd.greenFlags || []).length;
+    const dr = cd.drama || 60, bl = cd.blame || 60;
+    const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+    return [
+      null,                                          // timeline — no tally
+      clamp(Math.round(dr / 12), 3, 9),              // emotional moments ~ drama
+      clamp(Math.round(bl / 22), 2, 6),              // contradictions ~ blame
+      rf || clamp(Math.round(dr / 20), 2, 5),        // red flags (real count)
+      gf || clamp(Math.round((100 - bl) / 30), 1, 4),// green flags (real count)
+      clamp(Math.round((rf + gf) / 2) + 1, 2, 6),    // turning points
+    ];
+  }, [cd.redFlags, cd.greenFlags, cd.drama, cd.blame]);
 
   React.useEffect(() => {
     if (paywall) return;
@@ -93,9 +114,11 @@ function BuildScreen({ go, state, setState, chaos, off, mascot, lang }) {
   }, [done, steps.length, paywall]);
 
   // Real AI verdict — gated by free credits; premium modes enforced server-side (402).
+  // Showcase (viral) cases already carry their verdict, so don't hit the API.
   React.useEffect(() => {
     if (paywall || startedRef.current) return;
     startedRef.current = true;
+    if (showcase) { setSettled(true); return; }
     let alive = true;
     fetchTrial(state, lang)
       .then(api => {
@@ -158,8 +181,8 @@ function BuildScreen({ go, state, setState, chaos, off, mascot, lang }) {
                 transition: 'all 0.4s ease' }}>
                 <span style={{ fontSize: 22 }} className={active ? 'jp-bob' : ''}>{BUILD_ICONS[i]}</span>
                 <span style={{ flex: 1, fontFamily: 'Fredoka', fontWeight: 500, fontSize: 15, color: JP.ink }}>{s.label}</span>
-                {isDone && s.tail && <span style={{ fontFamily: 'Nunito', fontWeight: 800, fontSize: 12,
-                  color: JP.bubblegum, background: 'rgba(255,77,151,0.12)', padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>{s.tail}</span>}
+                {isDone && tallies[i] != null && <span style={{ fontFamily: 'Nunito', fontWeight: 800, fontSize: 12,
+                  color: JP.bubblegum, background: 'rgba(255,77,151,0.12)', padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>{tr.build.found(tallies[i])}</span>}
                 <span style={{ fontSize: 17, color: JP.mint, width: 18, textAlign: 'center' }}>
                   {isDone ? '✓' : active ? <span className="jp-spin" style={{ display: 'inline-block' }}>🐾</span> : ''}
                 </span>

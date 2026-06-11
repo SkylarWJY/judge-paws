@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#FFE8F4" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Judge Paws" />
   <link rel="apple-touch-icon" href="assets/icon-180.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png" />
@@ -62,6 +62,14 @@
     width: 100vw; height: 100vh; height: 100dvh;
     transform: none !important;
     background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
+  }
+  /* black-translucent status bar text is white; the app top is pale, so lay a
+     soft brand-pink fade behind the status bar for contrast (no hard white bar). */
+  .jp-stage--full::before {
+    content: ''; position: fixed; top: 0; left: 0; right: 0;
+    height: calc(env(safe-area-inset-top) + 10px);
+    background: linear-gradient(180deg, rgba(214,98,168,0.55), rgba(214,98,168,0));
+    pointer-events: none; z-index: 9999;
   }
   @media (max-width: 520px) {
     body { padding: 0; }
@@ -258,8 +266,10 @@
 
       const go = useCallback((next) => {
         setState(s => {
-          if (next === 'build') return { ...s, caseData: buildCase(s.relType || 'couple', lang, { you: s.you, them: s.them }) };
-          if (next === 'home') return { relType: null, story: '', you: '', them: '', evidence: [], mode: 'default', caseData: buildCase('couple', lang) };
+          // showcase (viral) cases carry their own verdict — don't rebuild it on the way to build
+          if (next === 'build') return s.showcase ? s : { ...s, showcase: false, caseData: buildCase(s.relType || 'couple', lang, { you: s.you, them: s.them }) };
+          if (next === 'type') return { ...s, showcase: false };
+          if (next === 'home') return { relType: null, story: '', you: '', them: '', evidence: [], mode: 'default', showcase: false, caseData: buildCase('couple', lang) };
           return s;
         });
         setScreen(next);
