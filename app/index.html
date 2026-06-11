@@ -32,6 +32,9 @@
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  /* Safety net: paint the page canvas (incl. the home-indicator safe area) the
+     same pale tone as the app's bottom, so nothing can ever read as a white edge. */
+  html { background: #FBE7FF; }
   body {
     min-height: 100vh;
     min-height: 100dvh;
@@ -58,10 +61,11 @@
      and home-indicator safe areas — no white bars. Safe-area padding is applied
      to the screen content (in Backdrop), not here, so the bg stays seamless. */
   .jp-stage--full {
-    /* inset:0 (not height:100dvh) so it reaches the true physical bottom edge —
-       dvh can exclude the home-indicator strip in standalone, leaking the body
-       colour as a pale bar. */
-    position: fixed; inset: 0;
+    /* 100vh (NOT 100dvh) includes the safe areas, so it reaches the true physical
+       bottom edge — dvh/inset can stop above the home-indicator strip in
+       standalone and leak the page colour as a pale bar. */
+    position: fixed; top: 0; left: 0; right: 0;
+    width: 100vw; height: 100vh; min-height: 100vh;
     transform: none !important;
     background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
   }
