@@ -61,11 +61,12 @@
      and home-indicator safe areas — no white bars. Safe-area padding is applied
      to the screen content (in Backdrop), not here, so the bg stays seamless. */
   .jp-stage--full {
-    /* 100vh (NOT 100dvh) includes the safe areas, so it reaches the true physical
-       bottom edge — dvh/inset can stop above the home-indicator strip in
-       standalone and leak the page colour as a pale bar. */
+    /* Height = the visible area MINUS the home-indicator inset, so the app's
+       buttons sit inside the reachable area (never pushed off-screen). The
+       home-indicator strip below is painted by html's matching #FBE7FF, so it
+       reads as the same pink, never white. */
     position: fixed; top: 0; left: 0; right: 0;
-    width: 100vw; height: 100vh; min-height: 100vh;
+    width: 100vw; height: calc(100dvh - env(safe-area-inset-bottom));
     transform: none !important;
     background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
   }
