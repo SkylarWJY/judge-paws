@@ -63,13 +63,13 @@
      and home-indicator safe areas — no white bars. Safe-area padding is applied
      to the screen content (in Backdrop), not here, so the bg stays seamless. */
   .jp-stage--full {
-    /* 100dvh already excludes the home-indicator strip on iOS, so buttons stay
-       reachable. Any strip behind it shows body/html — both painted the same
-       #FBE7FF / matching gradient, so it reads as the app's pink, never a
-       peach or white band. (Don't subtract the inset again — that double-counts
-       and leaves a fat band.) */
+    /* The stage extends EXACTLY one safe-area inset past 100dvh, so the app's
+       own animated gradient paints the home-indicator strip itself — no second
+       background to color-match, no seam, no band. The Backdrop's content
+       column pads the same env() back, so buttons sit in the reachable area
+       exactly where they are today. */
     position: fixed; top: 0; left: 0; right: 0;
-    width: 100vw; height: 100dvh;
+    width: 100vw; height: calc(100dvh + env(safe-area-inset-bottom, 0px));
     transform: none !important;
     background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
   }
