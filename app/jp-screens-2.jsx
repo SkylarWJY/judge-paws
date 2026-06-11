@@ -64,6 +64,16 @@ const VOTE_BASE = {
   guilty:   { emoji: '🔨', color: JP.red, bg: 'rgba(255,84,112,0.12)' },
   innocent: { emoji: '😇', color: JP.mint, bg: 'rgba(52,211,166,0.14)' },
 };
+// Jury votes scale with the defendant's blame share — so each case differs instead of
+// always reading 4/5. Only the Golden Retriever (idx0, "forgive everyone") and Shiba
+// (idx1, "needs more evidence") ever acquit, matching their takes; the rest always convict.
+// Clamped to a 3–5 guilty majority so it never contradicts a GUILTY ruling.
+function juryFor(c) {
+  const blame = (c && typeof c.blame === 'number') ? c.blame : 67;
+  const guilty = blame >= 90 ? 5 : blame >= 75 ? 4 : 3;
+  const acquit = [0, 1].slice(0, 5 - guilty);
+  return JUROR_BASE.map((j, i) => ({ emoji: j.emoji, vote: acquit.includes(i) ? 'innocent' : 'guilty' }));
+}
 
 const BUILD_ICONS = ['📜', '💗', '🔀', '🚩', '💚', '🔮'];
 
@@ -174,14 +184,15 @@ function CourtScreen({ go, state, chaos, off, mascot, lang }) {
   const tr = I18N[lang];
   const c = state.caseData;
   const quip = useRotating(tr.quipsCourt, 2800);
+  const jury = juryFor(c);
   const [revealed, setRevealed] = React.useState(0);
   React.useEffect(() => {
-    if (revealed >= JUROR_BASE.length) return;
+    if (revealed >= jury.length) return;
     const t = setTimeout(() => setRevealed(r => r + 1), revealed === 0 ? 900 : 650);
     return () => clearTimeout(t);
   }, [revealed]);
-  const allIn = revealed >= JUROR_BASE.length;
-  const guilty = JUROR_BASE.slice(0, revealed).filter(j => j.vote === 'guilty').length;
+  const allIn = revealed >= jury.length;
+  const guilty = jury.slice(0, revealed).filter(j => j.vote === 'guilty').length;
   const fallback = [{ id: 'imessage', emoji: '💬' }, { id: 'whatsapp', emoji: '🟢' }, { id: 'photo', emoji: '📸' }];
 
   return (
@@ -251,7 +262,7 @@ function CourtScreen({ go, state, chaos, off, mascot, lang }) {
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-              {JUROR_BASE.map((j, i) => {
+              {jury.map((j, i) => {
                 const shown = i < revealed;
                 const vm = VOTE_BASE[j.vote];
                 const jt = tr.jurors[i];
@@ -421,7 +432,7 @@ async function renderVerdictLongImage(c, lang, drama, guilty, mascot) {
   ctx.fillStyle = 'rgba(255,255,255,0.88)'; _rr(ctx, PAD, y, CW, 180, 30); ctx.fill();
   ctx.fillStyle = INK; ctx.font = F(800, 30);
   ctx.fillText('📺 ' + tr.verdict.dramaMeter, PAD + 40, y + 58);
-  const dv = drama != null ? drama : c.drama;
+  const dv = c.drama != null ? c.drama : drama;
   const tierIdx = Math.min(4, Math.floor(dv / 20.0001));
   ctx.fillStyle = PINK; ctx.font = F(800, 30); ctx.textAlign = 'right';
   ctx.fillText(dv + ' · ' + tr.dramaTiers[tierIdx], PAD + CW - 40, y + 58);
@@ -523,7 +534,7 @@ function VerdictScreen({ go, state, chaos, off, mascot, drama, lang }) {
   const c = state.caseData;
   const [stamp, setStamp] = React.useState(false);
   React.useEffect(() => { const t = setTimeout(() => setStamp(true), 400); return () => clearTimeout(t); }, []);
-  const guilty = JUROR_BASE.filter(j => j.vote === 'guilty').length;
+  const guilty = juryFor(c).filter(j => j.vote === 'guilty').length;
   return (
     <Backdrop tint="pink">
       <Particles kind="confetti" count={chaos ? 22 : 12} run={!off} />
@@ -568,7 +579,7 @@ function VerdictScreen({ go, state, chaos, off, mascot, drama, lang }) {
             {/* drama meter */}
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <SectionLabel icon="📺" text={tr.verdict.dramaMeter} />
-              <DramaMeter value={drama != null ? drama : c.drama} tierLabels={tr.dramaTiers} />
+              <DramaMeter value={c.drama != null ? c.drama : drama} tierLabels={tr.dramaTiers} />
             </div>
 
             {/* jury result */}
