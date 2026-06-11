@@ -48,6 +48,8 @@ const JP_SOCIAL = {
   igHandle: '@skylarwjy',
   xhs: 'https://xhslink.com/m/AXPGBI3TmTh',
   xhsHandle: '@Skylar创业版',
+  linkedin: 'https://www.linkedin.com/in/jiayiwang-skylar',
+  linkedinHandle: 'Jiayi (Skylar) Wang',
 };
 window.JP_SOCIAL = JP_SOCIAL;
 
@@ -60,6 +62,7 @@ const PAYWALL_COPY = {
     or: 'or follow to unlock',
     igBtn: '📸 Instagram  ' + JP_SOCIAL.igHandle,
     xhsBtn: '📕 小红书 (RED)  ' + JP_SOCIAL.xhsHandle,
+    liBtn: '💼 LinkedIn  ' + JP_SOCIAL.linkedinHandle,
     followedBtn: 'I followed — continue ✓',
     softTitle: 'Enjoyed your verdict? 🐾',
     softSub: 'Follow or share Skylar to support — totally optional.',
@@ -74,6 +77,7 @@ const PAYWALL_COPY = {
     or: '或 关注解锁',
     igBtn: '📸 Instagram  ' + JP_SOCIAL.igHandle,
     xhsBtn: '📕 小红书  ' + JP_SOCIAL.xhsHandle,
+    liBtn: '💼 领英 LinkedIn',
     followedBtn: '我已关注,继续 ✓',
     softTitle: '判得还满意吗?🐾',
     softSub: '关注或分享 Skylar 支持一下~ 完全自愿。',
@@ -141,6 +145,7 @@ function Paywall({ reason, lang, onClose, onUnlocked, mascot, chaos, off, soft =
             {/* follow → honor-system unlock */}
             {followBtn(t.igBtn, JP_SOCIAL.ig)}
             {followBtn(t.xhsBtn, JP_SOCIAL.xhs)}
+            {followBtn(t.liBtn, JP_SOCIAL.linkedin)}
             {opened && (
               <PawButton full secondary onClick={unlock} style={{ marginTop: 12 }}>{t.followedBtn}</PawButton>
             )}

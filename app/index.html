@@ -58,8 +58,10 @@
      and home-indicator safe areas — no white bars. Safe-area padding is applied
      to the screen content (in Backdrop), not here, so the bg stays seamless. */
   .jp-stage--full {
-    position: fixed; inset: 0; top: 0; left: 0;
-    width: 100vw; height: 100vh; height: 100dvh;
+    /* inset:0 (not height:100dvh) so it reaches the true physical bottom edge —
+       dvh can exclude the home-indicator strip in standalone, leaking the body
+       colour as a pale bar. */
+    position: fixed; inset: 0;
     transform: none !important;
     background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
   }
