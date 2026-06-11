@@ -39,7 +39,9 @@
     min-height: 100vh;
     min-height: 100dvh;
     display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(120% 120% at 50% 0%, #FFE8F4 0%, #F3E9FF 50%, #FFE6DC 100%);
+    /* same gradient as the in-app Backdrop, so any safe-area strip behind the
+       phone matches the app's bottom (no peach/white band). */
+    background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
     background-attachment: fixed;
     font-family: 'Nunito', sans-serif;
     padding: 24px;
@@ -61,12 +63,13 @@
      and home-indicator safe areas — no white bars. Safe-area padding is applied
      to the screen content (in Backdrop), not here, so the bg stays seamless. */
   .jp-stage--full {
-    /* Height = the visible area MINUS the home-indicator inset, so the app's
-       buttons sit inside the reachable area (never pushed off-screen). The
-       home-indicator strip below is painted by html's matching #FBE7FF, so it
-       reads as the same pink, never white. */
+    /* 100dvh already excludes the home-indicator strip on iOS, so buttons stay
+       reachable. Any strip behind it shows body/html — both painted the same
+       #FBE7FF / matching gradient, so it reads as the app's pink, never a
+       peach or white band. (Don't subtract the inset again — that double-counts
+       and leaves a fat band.) */
     position: fixed; top: 0; left: 0; right: 0;
-    width: 100vw; height: calc(100dvh - env(safe-area-inset-bottom));
+    width: 100vw; height: 100dvh;
     transform: none !important;
     background: linear-gradient(165deg, #FFF1F8 0%, #FFE4F2 55%, #FBE7FF 100%);
   }
