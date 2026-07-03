@@ -11,14 +11,13 @@
 import { createServer } from "node:http";
 import { readFile, mkdir, readFile as rf, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { extname, join, normalize, dirname } from "node:path";
+import { extname, join, dirname, resolve, sep } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import Stripe from "stripe";
 
 const PORT = process.env.PORT || 4319;
 const ROOT = new URL(".", import.meta.url).pathname;
 const WAITLIST = join(ROOT, "data", "waitlist.json");
-const ENTITLEMENTS = join(ROOT, "data", "entitlements.json");
 
 const client = new Anthropic(); // ANTHROPIC_API_KEY from env
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
@@ -206,41 +205,40 @@ async function addToWaitlist(email) {
 }
 
 // ---- Entitlements (who has Judge Paws+) ------------------------------------
+// Stripe (the Axio Lab account) is the single source of truth. No local file:
+// Render's disk is ephemeral, so a JSON cache silently resets on every deploy.
+// A small in-memory TTL cache keeps us from hitting Stripe on every request.
 
-async function readEntitlements() {
-  if (!existsSync(ENTITLEMENTS)) return {};
-  try { return JSON.parse(await rf(ENTITLEMENTS, "utf8")); } catch { return {}; }
+const ENT_TTL_TRUE = 10 * 60 * 1000;  // subscribed: recheck every 10 min
+const ENT_TTL_FALSE = 60 * 1000;      // not subscribed: recheck every 60s
+const entCache = new Map();           // email -> { subscribed, exp }
+
+function cacheEntitlement(email, subscribed) {
+  if (!email) return;
+  entCache.set(email.toLowerCase(), {
+    subscribed, exp: Date.now() + (subscribed ? ENT_TTL_TRUE : ENT_TTL_FALSE),
+  });
 }
-async function writeEntitlements(map) {
-  await mkdir(dirname(ENTITLEMENTS), { recursive: true });
-  await writeFile(ENTITLEMENTS, JSON.stringify(map, null, 2));
-}
+
 async function isSubscribed(email) {
   if (!email) return false;
   const key = email.toLowerCase();
-  // 1) fast path: local cache (written by the webhook)
-  const map = await readEntitlements();
-  if (map[key] && map[key].subscribed) return true;
-  // 2) source of truth: ask Stripe directly (survives server restarts / fresh deploys)
-  if (stripe) {
-    try {
-      const customers = await stripe.customers.list({ email: key, limit: 1 });
-      if (customers.data.length) {
-        const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: "active", limit: 1 });
-        if (subs.data.length) {
-          await setSubscribed(key, true, { customerId: customers.data[0].id, subscriptionId: subs.data[0].id });
-          return true;
-        }
-      }
-    } catch (err) { console.error("stripe subscription check", err.message); }
+  const hit = entCache.get(key);
+  if (hit && hit.exp > Date.now()) return hit.subscribed;
+  if (!stripe) return false;
+  try {
+    const customers = await stripe.customers.list({ email: key, limit: 1 });
+    let subscribed = false;
+    if (customers.data.length) {
+      const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: "active", limit: 1 });
+      subscribed = subs.data.length > 0;
+    }
+    cacheEntitlement(key, subscribed);
+    return subscribed;
+  } catch (err) {
+    console.error("stripe subscription check", err.message);
+    return hit ? hit.subscribed : false;  // stale-if-error beats a hard no
   }
-  return false;
-}
-async function setSubscribed(email, subscribed, extra = {}) {
-  if (!email) return;
-  const map = await readEntitlements();
-  map[email.toLowerCase()] = { ...(map[email.toLowerCase()] || {}), subscribed, updatedAt: new Date().toISOString(), ...extra };
-  await writeEntitlements(map);
 }
 
 // ---- HTTP plumbing ---------------------------------------------------------
@@ -311,6 +309,21 @@ function sanitizeEvidence(evidence) {
 }
 
 const server = createServer(async (req, res) => {
+  // request log for API routes (method, path, status, latency — no query strings)
+  const t0 = Date.now();
+  res.on("finish", () => {
+    const path = (req.url || "").split("?")[0];
+    if (path.startsWith("/api/")) console.log(`${req.method} ${path} ${res.statusCode} ${Date.now() - t0}ms`);
+  });
+
+  // --- Health check (uptime probes / keepalive) ---
+  if (req.method === "GET" && req.url === "/healthz") {
+    return sendJSON(res, 200, {
+      ok: true, uptime: Math.round(process.uptime()),
+      gemini: !!process.env.GEMINI_API_KEY, claude: !!process.env.ANTHROPIC_API_KEY, stripe: !!stripe,
+    });
+  }
+
   // --- Stripe webhook (needs raw body; check before other JSON routes) ---
   if (req.method === "POST" && req.url === "/api/stripe-webhook") {
     if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) return sendJSON(res, 400, { error: "Stripe not configured" });
@@ -323,12 +336,12 @@ const server = createServer(async (req, res) => {
       if (event.type === "checkout.session.completed") {
         const s = event.data.object;
         const email = s.customer_details?.email || s.customer_email;
-        await setSubscribed(email, true, { customerId: s.customer, subscriptionId: s.subscription });
+        cacheEntitlement(email, true);
       } else if (event.type === "customer.subscription.deleted") {
+        // resolve the email from Stripe itself — no local map to depend on
         const sub = event.data.object;
-        const map = await readEntitlements();
-        const email = Object.keys(map).find((k) => map[k].subscriptionId === sub.id);
-        if (email) await setSubscribed(email, false);
+        const cust = await stripe.customers.retrieve(sub.customer);
+        if (cust && !cust.deleted && cust.email) cacheEntitlement(cust.email, false);
       }
     } catch (err) { console.error("webhook handler", err); }
     return sendJSON(res, 200, { received: true });
@@ -407,9 +420,16 @@ const server = createServer(async (req, res) => {
   // --- Static ---
   let path = decodeURIComponent((req.url || "/").split("?")[0]);
   if (!path.startsWith("/app/") && !path.startsWith("/web/")) path = "/web" + path;
-  const safe = normalize(path).replace(/^(\.\.[/\\])+/, "");
+  // containment check: the resolved path must land inside app/ or web/ ONLY.
+  // (Containing to ROOT is not enough — /web/../.env resolves inside ROOT and
+  // would serve secrets. Whitelist the two public dirs instead.)
+  const safe = resolve(join(ROOT, "." + path));
+  const PUBLIC_DIRS = [resolve(join(ROOT, "app")), resolve(join(ROOT, "web"))];
+  if (!PUBLIC_DIRS.some((d) => safe.startsWith(d + sep))) {
+    res.writeHead(404, { "content-type": "text/plain" }); return res.end("Not found");
+  }
   try {
-    const data = await readFile(join(ROOT, safe));
+    const data = await readFile(safe);
     const ext = extname(safe);
     // App code (html/jsx/json) must always be fresh — otherwise iOS caches a
     // stale index.html/CSS and updates never reach installed home-screen PWAs.
