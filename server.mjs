@@ -111,7 +111,7 @@ OUTPUT LANGUAGE: ${zh ? "Chinese (中文) — EVERY string field in the verdict 
     system: mode === "savage" ? SYSTEM + SAVAGE : SYSTEM,
     messages: [{ role: "user", content }],
     output_config: { format: { type: "json_schema", schema: CASE_SCHEMA } },
-  });
+  }, { timeout: 25000 });
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock) throw new Error("No verdict returned");
   return JSON.parse(textBlock.text);
@@ -174,6 +174,7 @@ OUTPUT LANGUAGE: ${zh ? "Chinese (中文) — EVERY string field must be natural
       contents: [{ role: "user", parts }],
       generationConfig: { responseMimeType: "application/json", responseSchema: G_CASE_SCHEMA, maxOutputTokens: 1500 },
     }),
+    signal: AbortSignal.timeout(25000),
   });
   if (!r.ok) throw new Error(`gemini ${r.status}: ${(await r.text()).slice(0, 200)}`);
   const d = await r.json();
@@ -254,7 +255,7 @@ const MIME = {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
-    req.on("data", (c) => { data += c; if (data.length > 2e7) reject(new Error("Body too large")); });
+    req.on("data", (c) => { data += c; if (data.length > 9e6) { req.destroy(); reject(new Error("Body too large")); } });
     req.on("end", () => resolve(data));
     req.on("error", reject);
   });
@@ -266,6 +267,47 @@ function sendJSON(res, status, obj) {
 function originOf(req) {
   const proto = req.headers["x-forwarded-proto"] || "http";
   return `${proto}://${req.headers.host}`;
+}
+function clientIp(req) {
+  return (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+}
+
+// ---- Per-IP rate limit for the expensive /api/trials endpoint --------------
+// The free quota is client-side (localStorage); this is the server-side backstop
+// that stops a script from looping the endpoint and burning the model budget.
+const RL_MAX_MIN = 20, RL_MAX_DAY = 200;
+const rlMap = new Map(); // ip -> { min:{c,reset}, day:{c,reset} }
+function rateLimited(ip) {
+  const now = Date.now();
+  let e = rlMap.get(ip);
+  if (!e) { e = { min: { c: 0, reset: now + 60000 }, day: { c: 0, reset: now + 86400000 } }; rlMap.set(ip, e); }
+  if (now > e.min.reset) { e.min.c = 0; e.min.reset = now + 60000; }
+  if (now > e.day.reset) { e.day.c = 0; e.day.reset = now + 86400000; }
+  e.min.c++; e.day.c++;
+  return e.min.c > RL_MAX_MIN || e.day.c > RL_MAX_DAY;
+}
+// prune stale IPs hourly so the map can't grow unbounded
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, e] of rlMap) if (now > e.day.reset) rlMap.delete(ip);
+}, 3600000).unref?.();
+
+// ---- Evidence sanitising (bound payload → memory + model cost) --------------
+const MAX_IMAGES = 4, MAX_IMG_B64 = 2_800_000; // ~2MB base64 ≈ ~2.1MB decoded
+function sanitizeEvidence(evidence) {
+  const items = Array.isArray(evidence) ? evidence : [];
+  let images = 0;
+  const out = [];
+  for (const e of items) {
+    if (e && e.kind === "image" && e.data) {
+      if (++images > MAX_IMAGES) continue;        // drop extras rather than fail
+      if (String(e.data).length > MAX_IMG_B64) return { error: "One of your screenshots is too large (max ~2MB each)." };
+      out.push({ kind: "image", data: e.data, mediaType: e.mediaType, label: e.label });
+    } else if (e && e.text) {
+      out.push({ text: String(e.text).slice(0, 2000), label: e.label });
+    }
+  }
+  return { evidence: out };
 }
 
 const server = createServer(async (req, res) => {
@@ -295,7 +337,10 @@ const server = createServer(async (req, res) => {
   // --- AI verdict (premium modes gated) ---
   if (req.method === "POST" && req.url === "/api/trials") {
     try {
+      if (rateLimited(clientIp(req))) return sendJSON(res, 429, { error: "Whoa — too many cases at once. Give the dogs a minute. 🐾" });
       const { relationshipType, evidence, mode, email, lang, story, you, them } = JSON.parse((await readBody(req)) || "{}");
+      const clean = sanitizeEvidence(evidence);
+      if (clean.error) return sendJSON(res, 413, { error: clean.error });
       if (mode && mode !== "default") {
         if (!(await isSubscribed(email))) return sendJSON(res, 402, { error: "Judge Paws+ required for premium modes.", upgrade: true });
       }
@@ -305,7 +350,7 @@ const server = createServer(async (req, res) => {
       const premium = (mode && mode !== "default") || (await isSubscribed(email));
       const hasClaude = !!process.env.ANTHROPIC_API_KEY;
       const hasGemini = !!process.env.GEMINI_API_KEY;
-      const args = { relationshipType, evidence, mode, lang, story, you, them };
+      const args = { relationshipType, evidence: clean.evidence, mode, lang, story: typeof story === "string" ? story.slice(0, 4000) : story, you, them };
       if (premium && hasClaude) return sendJSON(res, 200, await renderTrial(args));
       if (hasGemini) {
         try { return sendJSON(res, 200, await renderTrialGemini(args)); }
@@ -340,8 +385,8 @@ const server = createServer(async (req, res) => {
         line_items: [{ price, quantity: 1 }],
         customer_email: email,
         allow_promotion_codes: true,
-        success_url: `${base}/app/Judge%20Paws.html?paid=1&email=${encodeURIComponent(email)}`,
-        cancel_url: `${base}/app/Judge%20Paws.html?canceled=1`,
+        success_url: `${base}/app/index.html?paid=1&email=${encodeURIComponent(email)}`,
+        cancel_url: `${base}/app/index.html?canceled=1`,
       });
       return sendJSON(res, 200, { url: session.url });
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Could not start checkout. Try again." }); }
@@ -382,7 +427,7 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`🐾 Judge Paws running at http://localhost:${PORT}`);
   console.log(`   Landing: http://localhost:${PORT}/`);
-  console.log(`   App:     http://localhost:${PORT}/app/Judge%20Paws.html`);
+  console.log(`   App:     http://localhost:${PORT}/app/index.html`);
   if (!process.env.ANTHROPIC_API_KEY) console.log("⚠️  Set ANTHROPIC_API_KEY to enable verdicts.");
   if (!stripe) console.log("ℹ️  Stripe not configured — paywall shows but checkout is disabled (set STRIPE_SECRET_KEY).");
 });
