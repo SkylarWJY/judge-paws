@@ -25,6 +25,7 @@ function buildCase(relType, lang, names) {
 // Falls back silently to buildCase() if the backend is unavailable.
 async function fetchTrial(st, lang) {
   const email = window.JPB ? JPB.email() : '';
+  const token = window.JPB && JPB.token ? JPB.token() : '';
   const res = await fetch('/api/trials', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -36,6 +37,7 @@ async function fetchTrial(st, lang) {
       them: (st && st.them) || '',
       mode: (st && st.mode) || 'default',
       email,
+      token,
       evidence: ((st && st.evidence) || []).map(e => e.dataUrl
         ? { label: (e.src && e.src.id) || 'screenshot', kind: 'image', mediaType: e.mediaType || 'image/jpeg', data: e.dataUrl.split(',')[1] }
         : { label: (e.src && e.src.id) || 'evidence' }),

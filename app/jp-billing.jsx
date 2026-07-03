@@ -22,6 +22,9 @@
     setSoftSeen() { set('softseen', true); },
     email() { return get('email', '') || ''; },
     setEmail(e) { set('email', e); },
+    // entitlement token — HMAC proof from /api/claim; sent with premium calls.
+    token() { return get('token', '') || ''; },
+    setToken(t) { set('token', t); },
     remaining() { if (this.unlocked() || this.subscribed()) return Infinity; const u = usage(); return this.FREE_QUOTA - u.used; },
     canRun() { return this.unlocked() || this.subscribed() || this.remaining() > 0; },
     consume() { if (this.unlocked() || this.subscribed()) return; const u = usage(); u.used += 1; set('usage', u); },
@@ -30,14 +33,27 @@
   };
   window.JPB = JPB;
 
-  // Returning from Stripe checkout (?paid=1&email=...) — unlock optimistically.
+  // Returning from Stripe checkout (?paid=1&session_id=...) — exchange the
+  // session id for an entitlement token (server verifies the session is PAID).
+  // The email itself is never a credential: premium calls need email + token.
   try {
     const p = new URLSearchParams(location.search);
     if (p.get('paid') === '1') {
-      const em = p.get('email') || '';
-      if (em) JPB.setEmail(em);
-      JPB.setSubscribed(true);
+      const sid = p.get('session_id') || '';
       history.replaceState({}, '', location.pathname);
+      if (sid) {
+        fetch('/api/claim', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ session_id: sid }),
+        }).then(r => r.json()).then(d => {
+          if (d && d.token) {
+            JPB.setEmail(d.email || '');
+            JPB.setToken(d.token);
+            JPB.setSubscribed(true);
+          }
+        }).catch(() => {});
+      }
     }
   } catch (_) {}
 })();

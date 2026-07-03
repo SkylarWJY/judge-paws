@@ -11,18 +11,33 @@
 import { createServer } from "node:http";
 import { readFile, mkdir, readFile as rf, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { extname, join, dirname, resolve, sep } from "node:path";
+import { join, dirname } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import Stripe from "stripe";
+import {
+  clientIpFrom, makeRateLimiter, sanitizeEvidence, MAX_TRIAL_BODY,
+  signEntitlement, verifyEntitlement, resolvePublicPath, mimeFor,
+} from "./server-lib.mjs";
 
 const PORT = process.env.PORT || 4319;
 const ROOT = new URL(".", import.meta.url).pathname;
 const WAITLIST = join(ROOT, "data", "waitlist.json");
+const IS_PROD = !!process.env.RENDER || process.env.NODE_ENV === "production";
 
-const client = new Anthropic(); // ANTHROPIC_API_KEY from env
+// The SDK throws at construction when the key is missing — instantiate only
+// when configured so the no-key dev boot (and the hasClaude fallbacks) work.
+const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const PRICE_MONTHLY = process.env.STRIPE_PRICE_MONTHLY || "";
 const PRICE_YEARLY = process.env.STRIPE_PRICE_YEARLY || "";
+// Secret for entitlement tokens. Falls back to the Stripe secret so no new env
+// var is required; if neither exists, premium is unreachable anyway.
+const ENT_SECRET = process.env.ENT_SECRET || process.env.STRIPE_SECRET_KEY || "";
+
+// A crashed process serves nobody: log-and-survive beats Node's default
+// exit-on-unhandledRejection for a single-instance product server.
+process.on("unhandledRejection", (err) => console.error("unhandledRejection", err));
+process.on("uncaughtException", (err) => console.error("uncaughtException", err));
 
 // ---- Trial engine ----------------------------------------------------------
 
@@ -184,6 +199,8 @@ OUTPUT LANGUAGE: ${zh ? "Chinese (中文) — EVERY string field must be natural
 
 // ---- Waitlist (beehiiv or local) -------------------------------------------
 
+let waitlistChain = Promise.resolve(); // serialise read-modify-write (no lost emails)
+
 async function addToWaitlist(email) {
   const apiKey = process.env.BEEHIIV_API_KEY, pubId = process.env.BEEHIIV_PUBLICATION_ID;
   if (apiKey && pubId) {
@@ -195,13 +212,19 @@ async function addToWaitlist(email) {
     if (!r.ok) throw new Error(`beehiiv ${r.status}`);
     return;
   }
-  await mkdir(dirname(WAITLIST), { recursive: true });
-  let list = [];
-  if (existsSync(WAITLIST)) { try { list = JSON.parse(await rf(WAITLIST, "utf8")); } catch {} }
-  if (!list.some((e) => e.email === email)) {
-    list.push({ email, at: new Date().toISOString() });
-    await writeFile(WAITLIST, JSON.stringify(list, null, 2));
-  }
+  // In production the local file lives on Render's EPHEMERAL disk — accepting
+  // an email we'll silently lose on the next deploy is worse than an error.
+  if (IS_PROD) throw new Error("waitlist misconfigured: BEEHIIV_* env vars missing in production");
+  waitlistChain = waitlistChain.then(async () => {
+    await mkdir(dirname(WAITLIST), { recursive: true });
+    let list = [];
+    if (existsSync(WAITLIST)) { try { list = JSON.parse(await rf(WAITLIST, "utf8")); } catch {} }
+    if (!list.some((e) => e.email === email)) {
+      list.push({ email, at: new Date().toISOString() });
+      await writeFile(WAITLIST, JSON.stringify(list, null, 2));
+    }
+  });
+  await waitlistChain;
 }
 
 // ---- Entitlements (who has Judge Paws+) ------------------------------------
@@ -243,18 +266,19 @@ async function isSubscribed(email) {
 
 // ---- HTTP plumbing ---------------------------------------------------------
 
-const MIME = {
-  ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
-  ".mjs": "text/javascript; charset=utf-8", ".jsx": "text/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg", ".ico": "image/x-icon",
-};
-function readBody(req) {
+// readBody with a per-route cap: the trials endpoint legitimately carries
+// ~11MB of screenshots, while waitlist/checkout/webhook bodies are tiny —
+// giving every route the big cap would hand attackers free memory amplification.
+function readBody(req, limit = 64_000) {
   return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (c) => { data += c; if (data.length > 9e6) { req.destroy(); reject(new Error("Body too large")); } });
-    req.on("end", () => resolve(data));
+    const chunks = [];
+    let size = 0;
+    req.on("data", (c) => {
+      size += c.length;
+      if (size > limit) { req.destroy(); reject(new Error("Body too large")); return; }
+      chunks.push(c);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     req.on("error", reject);
   });
 }
@@ -267,46 +291,13 @@ function originOf(req) {
   return `${proto}://${req.headers.host}`;
 }
 function clientIp(req) {
-  return (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+  return clientIpFrom(req.headers["x-forwarded-for"], req.socket.remoteAddress);
 }
 
-// ---- Per-IP rate limit for the expensive /api/trials endpoint --------------
-// The free quota is client-side (localStorage); this is the server-side backstop
-// that stops a script from looping the endpoint and burning the model budget.
-const RL_MAX_MIN = 20, RL_MAX_DAY = 200;
-const rlMap = new Map(); // ip -> { min:{c,reset}, day:{c,reset} }
-function rateLimited(ip) {
-  const now = Date.now();
-  let e = rlMap.get(ip);
-  if (!e) { e = { min: { c: 0, reset: now + 60000 }, day: { c: 0, reset: now + 86400000 } }; rlMap.set(ip, e); }
-  if (now > e.min.reset) { e.min.c = 0; e.min.reset = now + 60000; }
-  if (now > e.day.reset) { e.day.c = 0; e.day.reset = now + 86400000; }
-  e.min.c++; e.day.c++;
-  return e.min.c > RL_MAX_MIN || e.day.c > RL_MAX_DAY;
-}
-// prune stale IPs hourly so the map can't grow unbounded
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, e] of rlMap) if (now > e.day.reset) rlMap.delete(ip);
-}, 3600000).unref?.();
-
-// ---- Evidence sanitising (bound payload → memory + model cost) --------------
-const MAX_IMAGES = 4, MAX_IMG_B64 = 2_800_000; // ~2MB base64 ≈ ~2.1MB decoded
-function sanitizeEvidence(evidence) {
-  const items = Array.isArray(evidence) ? evidence : [];
-  let images = 0;
-  const out = [];
-  for (const e of items) {
-    if (e && e.kind === "image" && e.data) {
-      if (++images > MAX_IMAGES) continue;        // drop extras rather than fail
-      if (String(e.data).length > MAX_IMG_B64) return { error: "One of your screenshots is too large (max ~2MB each)." };
-      out.push({ kind: "image", data: e.data, mediaType: e.mediaType, label: e.label });
-    } else if (e && e.text) {
-      out.push({ text: String(e.text).slice(0, 2000), label: e.label });
-    }
-  }
-  return { evidence: out };
-}
+// Server-side backstop for the expensive /api/trials endpoint (the free quota
+// itself is client-side). Keyed on the rightmost x-forwarded-for hop — see lib.
+const limiter = makeRateLimiter({ maxPerMin: 20, maxPerDay: 200 });
+setInterval(() => limiter.prune(), 3600_000).unref?.();
 
 const server = createServer(async (req, res) => {
   // request log for API routes (method, path, status, latency — no query strings)
@@ -327,7 +318,11 @@ const server = createServer(async (req, res) => {
   // --- Stripe webhook (needs raw body; check before other JSON routes) ---
   if (req.method === "POST" && req.url === "/api/stripe-webhook") {
     if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) return sendJSON(res, 400, { error: "Stripe not configured" });
-    const raw = await readBody(req);
+    // readBody rejects on oversized bodies — unwrapped, that rejection would
+    // become an unhandledRejection (one oversized POST = crashed process).
+    let raw;
+    try { raw = await readBody(req, 1_000_000); }
+    catch { return sendJSON(res, 413, { error: "Body too large" }); }
     let event;
     try {
       event = stripe.webhooks.constructEvent(raw, req.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
@@ -350,26 +345,34 @@ const server = createServer(async (req, res) => {
   // --- AI verdict (premium modes gated) ---
   if (req.method === "POST" && req.url === "/api/trials") {
     try {
-      if (rateLimited(clientIp(req))) return sendJSON(res, 429, { error: "Whoa — too many cases at once. Give the dogs a minute. 🐾" });
-      const { relationshipType, evidence, mode, email, lang, story, you, them } = JSON.parse((await readBody(req)) || "{}");
+      if (limiter.limited(clientIp(req))) return sendJSON(res, 429, { error: "Whoa — too many cases at once. Give the dogs a minute. 🐾" });
+      const { relationshipType, evidence, mode, email, token, lang, story, you, them } = JSON.parse((await readBody(req, MAX_TRIAL_BODY)) || "{}");
       const clean = sanitizeEvidence(evidence);
       if (clean.error) return sendJSON(res, 413, { error: clean.error });
-      if (mode && mode !== "default") {
-        if (!(await isSubscribed(email))) return sendJSON(res, 402, { error: "Judge Paws+ required for premium modes.", upgrade: true });
+      // Premium requires PROOF of identity (HMAC token from /api/claim), not a
+      // bare email — emails are guessable and must never act as credentials.
+      const authed = verifyEntitlement(ENT_SECRET, email, token);
+      const subscribed = authed && (await isSubscribed(email));
+      if (mode && mode !== "default" && !subscribed) {
+        return sendJSON(res, 402, { error: "Judge Paws+ required for premium modes.", upgrade: true });
       }
       // Tiered model routing:
       //   subscribers + premium modes → Claude Opus (best quality, worth the cost)
       //   free tier → Gemini Flash-Lite (~$0.0005/verdict) when configured
-      const premium = (mode && mode !== "default") || (await isSubscribed(email));
+      const premium = (mode && mode !== "default") || subscribed;
       const hasClaude = !!process.env.ANTHROPIC_API_KEY;
       const hasGemini = !!process.env.GEMINI_API_KEY;
       const args = { relationshipType, evidence: clean.evidence, mode, lang, story: typeof story === "string" ? story.slice(0, 4000) : story, you, them };
-      if (premium && hasClaude) return sendJSON(res, 200, await renderTrial(args));
+      const serve = (model, verdict) => {
+        console.log(`trial model=${model} premium=${premium} images=${clean.evidence.filter((e) => e.kind === "image").length}`);
+        return sendJSON(res, 200, verdict);
+      };
+      if (premium && hasClaude) return serve("opus", await renderTrial(args));
       if (hasGemini) {
-        try { return sendJSON(res, 200, await renderTrialGemini(args)); }
+        try { return serve("gemini", await renderTrialGemini(args)); }
         catch (err) { console.error("gemini failed, falling back:", err.message); if (!hasClaude) throw err; }
       }
-      if (hasClaude) return sendJSON(res, 200, await renderTrial(args));
+      if (hasClaude) return serve("opus", await renderTrial(args));
       return sendJSON(res, 500, { error: "Server has no model key configured (set GEMINI_API_KEY or ANTHROPIC_API_KEY)." });
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Judge Paws could not reach a verdict. Try again." }); }
   }
@@ -398,16 +401,40 @@ const server = createServer(async (req, res) => {
         line_items: [{ price, quantity: 1 }],
         customer_email: email,
         allow_promotion_codes: true,
-        success_url: `${base}/app/index.html?paid=1&email=${encodeURIComponent(email)}`,
+        // {CHECKOUT_SESSION_ID} is substituted by Stripe. The session id — not
+        // the email — is what the success page exchanges for an entitlement
+        // token (/api/claim): unguessable, and only the payer's browser has it.
+        success_url: `${base}/app/index.html?paid=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${base}/app/index.html?canceled=1`,
       });
       return sendJSON(res, 200, { url: session.url });
     } catch (err) { console.error(err); return sendJSON(res, 500, { error: "Could not start checkout. Try again." }); }
   }
 
-  // --- Check subscription status ---
+  // --- Claim entitlement token after checkout ---
+  // Proof-of-payment → credential exchange. The frontend posts the session_id
+  // from the success redirect; we verify with Stripe that this session is PAID
+  // and mint the HMAC token the client uses for premium calls from then on.
+  if (req.method === "POST" && req.url === "/api/claim") {
+    try {
+      if (limiter.limited(clientIp(req))) return sendJSON(res, 429, { error: "Too many attempts." });
+      if (!stripe) return sendJSON(res, 500, { error: "Payments aren't configured yet." });
+      const { session_id } = JSON.parse((await readBody(req)) || "{}");
+      if (!session_id || typeof session_id !== "string") return sendJSON(res, 400, { error: "Missing session_id." });
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+      const email = (session.customer_details?.email || session.customer_email || "").toLowerCase();
+      if (session.payment_status !== "paid" || !email) return sendJSON(res, 402, { error: "Session not paid." });
+      cacheEntitlement(email, true);
+      return sendJSON(res, 200, { email, token: signEntitlement(ENT_SECRET, email) });
+    } catch (err) { console.error("claim", err.message); return sendJSON(res, 400, { error: "Could not verify checkout session." }); }
+  }
+
+  // --- Check subscription status (token required — without it this endpoint
+  // is an oracle that lets anyone probe which emails are paying customers) ---
   if (req.method === "GET" && req.url.startsWith("/api/entitlement")) {
-    const email = new URL(req.url, "http://x").searchParams.get("email");
+    const q = new URL(req.url, "http://x").searchParams;
+    const email = q.get("email"), token = q.get("token");
+    if (!verifyEntitlement(ENT_SECRET, email, token)) return sendJSON(res, 200, { subscribed: false });
     return sendJSON(res, 200, { subscribed: await isSubscribed(email) });
   }
 
@@ -417,27 +444,20 @@ const server = createServer(async (req, res) => {
     return res.end();
   }
 
-  // --- Static ---
-  let path = decodeURIComponent((req.url || "/").split("?")[0]);
-  if (!path.startsWith("/app/") && !path.startsWith("/web/")) path = "/web" + path;
-  // containment check: the resolved path must land inside app/ or web/ ONLY.
-  // (Containing to ROOT is not enough — /web/../.env resolves inside ROOT and
-  // would serve secrets. Whitelist the two public dirs instead.)
-  const safe = resolve(join(ROOT, "." + path));
-  const PUBLIC_DIRS = [resolve(join(ROOT, "app")), resolve(join(ROOT, "web"))];
-  if (!PUBLIC_DIRS.some((d) => safe.startsWith(d + sep))) {
+  // --- Static (containment logic lives in server-lib.resolvePublicPath) ---
+  const safe = resolvePublicPath(ROOT, req.url);
+  if (!safe) {
     res.writeHead(404, { "content-type": "text/plain" }); return res.end("Not found");
   }
   try {
     const data = await readFile(safe);
-    const ext = extname(safe);
     // App code (html/jsx/json) must always be fresh — otherwise iOS caches a
     // stale index.html/CSS and updates never reach installed home-screen PWAs.
     // Static assets (images/fonts) can cache hard.
     const cache = /\.(html|jsx|json|webmanifest)$/i.test(safe)
       ? "no-cache, must-revalidate"
       : "public, max-age=86400";
-    res.writeHead(200, { "content-type": MIME[ext] || "application/octet-stream", "cache-control": cache });
+    res.writeHead(200, { "content-type": mimeFor(safe), "cache-control": cache });
     res.end(data);
   } catch {
     res.writeHead(404, { "content-type": "text/plain" }); res.end("Not found");
